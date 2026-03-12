@@ -1,0 +1,18 @@
+# ─── Configurações sensíveis ──────────────────
+js/config.js
+
+# ─── Sistema operacional ──────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Editores ─────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# ─── Node (caso use no futuro) ────────────────
+node_modules/
+.env
+.env.local

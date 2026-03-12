@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatórios — Controle de Pneus</title>
+  <script>
+    (function() {
+      const t = localStorage.getItem('cp-theme');
+      const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t || sys);
+    })();
+  </script>
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/relatorios.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <!-- ── Navbar ─────────────────────────────── -->
+  <header class="navbar">
+    <div class="navbar-brand">
+      <a href="dashboard.html" class="back-btn" title="Voltar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </a>
+      <div class="navbar-icon">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="14" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="4" fill="currentColor"/>
+          <line x1="32" y1="4"  x2="32" y2="18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="46" x2="32" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="4"  y1="32" x2="18" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="46" y1="32" x2="60" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="navbar-title">CONTROLE <strong>DE PNEUS</strong></span>
+    </div>
+    <div class="navbar-right">
+      <button class="theme-toggle" title="Alternar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <div class="user-avatar" id="userAvatar">?</div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- ── Page header ────────────────────── -->
+    <div class="page-header">
+      <div>
+        <p class="page-breadcrumb">Dashboard / Relatórios</p>
+        <h1 class="page-title">Relatórios</h1>
+      </div>
+    </div>
+
+    <!-- ── Seletor de obra ────────────────── -->
+    <div class="selector-card" id="selectorCard">
+      <div class="selector-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+      </div>
+      <div class="selector-body">
+        <h2 class="selector-title">Selecionar Obra</h2>
+        <p class="selector-sub">Escolha a obra para gerar o relatório completo</p>
+        <div class="selector-controls">
+          <div class="select-group">
+            <label class="field-label">Status</label>
+            <select id="filterStatus" class="field-select">
+              <option value="todas">Todas</option>
+              <option value="aberta">Abertas</option>
+              <option value="finalizada">Finalizadas</option>
+              <option value="arquivada">Arquivadas</option>
+            </select>
+          </div>
+          <div class="select-group flex-grow">
+            <label class="field-label">Obra</label>
+            <select id="selectObra" class="field-select">
+              <option value="">— Carregando obras... —</option>
+            </select>
+          </div>
+          <button class="btn-gerar" id="btnGerar" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            Gerar Relatório
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Estado vazio inicial ───────────── -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-illustration">
+        <svg viewBox="0 0 120 120" fill="none">
+          <circle cx="60" cy="60" r="52" stroke="var(--borda)" stroke-width="3"/>
+          <circle cx="60" cy="60" r="28" stroke="var(--borda)" stroke-width="3"/>
+          <circle cx="60" cy="60" r="8" fill="var(--borda-light)"/>
+          <line x1="60" y1="8"  x2="60" y2="32"  stroke="var(--borda)" stroke-width="3" stroke-linecap="round"/>
+          <line x1="60" y1="88" x2="60" y2="112" stroke="var(--borda)" stroke-width="3" stroke-linecap="round"/>
+          <line x1="8"  y1="60" x2="32" y2="60"  stroke="var(--borda)" stroke-width="3" stroke-linecap="round"/>
+          <line x1="88" y1="60" x2="112" y2="60" stroke="var(--borda)" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3>Selecione uma obra acima</h3>
+      <p>O relatório completo aparecerá aqui com todos os dados da obra selecionada.</p>
+    </div>
+
+    <!-- ── Loading ────────────────────────── -->
+    <div class="loading-state" id="loadingState" style="display:none">
+      <div class="spinner-lg"></div>
+      <p>Gerando relatório...</p>
+    </div>
+
+    <!-- ── Relatório ──────────────────────── -->
+    <div class="relatorio" id="relatorio" style="display:none">
+
+      <!-- Barra de ações do relatório -->
+      <div class="relatorio-toolbar">
+        <div class="relatorio-toolbar-left">
+          <span class="relatorio-label">Relatório gerado em <span id="relGeradoEm">—</span></span>
+        </div>
+        <button class="btn-imprimir" id="btnImprimir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Imprimir / PDF
+        </button>
+      </div>
+
+      <!-- Cabeçalho do relatório -->
+      <div class="rel-header" id="relHeader">
+        <div class="rel-header-top">
+          <div>
+            <div class="rel-status-badge" id="relStatusBadge">—</div>
+            <h2 class="rel-nome" id="relNome">—</h2>
+            <div class="rel-meta" id="relMeta"></div>
+          </div>
+          <div class="rel-header-logo">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4"/>
+              <circle cx="32" cy="32" r="14" stroke="currentColor" stroke-width="4"/>
+              <circle cx="32" cy="32" r="4" fill="currentColor"/>
+              <line x1="32" y1="4"  x2="32" y2="18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="32" y1="46" x2="32" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="4"  y1="32" x2="18" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              <line x1="46" y1="32" x2="60" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="rel-kpis" id="relKpis"></div>
+      </div>
+
+      <!-- Seção: Caminhões e Pneus -->
+      <div class="rel-section">
+        <div class="rel-section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="3" width="15" height="13" rx="2"/>
+            <path d="M16 8h4l3 3v5h-7V8z"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+          <h3>Caminhões e Pneus</h3>
+          <span class="rel-section-count" id="countCaminhoes">0</span>
+        </div>
+        <div class="rel-table-wrap">
+          <table class="rel-table" id="tabelaCaminhoes">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Caminhão</th>
+                <th>Placa</th>
+                <th>Pneus Atribuídos</th>
+                <th>Qtd.</th>
+              </tr>
+            </thead>
+            <tbody id="bodyCaminhoes"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Seção: Inventário de Pneus -->
+      <div class="rel-section">
+        <div class="rel-section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+          </svg>
+          <h3>Inventário de Pneus</h3>
+          <span class="rel-section-count" id="countPneus">0</span>
+        </div>
+        <div class="pneus-inventory" id="pneusInventory"></div>
+      </div>
+
+      <!-- Seção: Histórico de Trocas -->
+      <div class="rel-section">
+        <div class="rel-section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="17 1 21 5 17 9"/>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+          <h3>Histórico de Trocas</h3>
+          <span class="rel-section-count" id="countTrocas">0</span>
+        </div>
+        <div id="trocasContent">
+          <div class="rel-table-wrap">
+            <table class="rel-table" id="tabelaTrocas">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Data</th>
+                  <th>Caminhão</th>
+                  <th>Pneu Saiu</th>
+                  <th>Pneu Entrou</th>
+                  <th>Operador</th>
+                </tr>
+              </thead>
+              <tbody id="bodyTrocas"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- fim #relatorio -->
+
+  </main>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/relatorios.js"></script>
+</body>
+</html>

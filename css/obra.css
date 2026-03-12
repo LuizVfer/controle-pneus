@@ -1,0 +1,591 @@
+/* ============================================================
+   obra.css — Tela de Detalhes da Obra
+   Depende de theme.css
+   ============================================================ */
+
+/* ─── Navbar ─────────────────────────────────── */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  height: var(--navbar-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  background: var(--navbar-bg);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--borda);
+}
+.navbar-brand { display: flex; align-items: center; gap: 10px; }
+.back-btn {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  background: var(--cinza-soft); border: 1px solid var(--borda); border-radius: var(--radius-sm);
+  color: var(--texto-sub); text-decoration: none; transition: all var(--transition); flex-shrink: 0;
+}
+.back-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.back-btn svg { width: 16px; height: 16px; }
+.navbar-icon { width: 28px; height: 28px; color: var(--accent); animation: spinSlow 14s linear infinite; flex-shrink: 0; }
+.navbar-icon svg { width: 100%; height: 100%; }
+@keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.navbar-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--texto-sub); }
+.navbar-title strong { color: var(--accent); font-weight: 800; }
+.navbar-right { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); border: 1.5px solid var(--accent); color: var(--accent); font-family: var(--font-display); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* ─── Loading ────────────────────────────────── */
+.page-loading {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; height: calc(100vh - var(--navbar-h));
+  color: var(--texto-muted); font-size: 14px;
+}
+.spinner-lg { width: 44px; height: 44px; border: 4px solid var(--borda); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+/* ─── Main ───────────────────────────────────── */
+.main-content { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 32px 28px 80px; }
+
+/* ─── Header da obra ─────────────────────────── */
+.obra-header {
+  background: var(--card); border: 1px solid var(--borda);
+  border-radius: var(--radius); padding: 28px;
+  margin-bottom: 24px; box-shadow: var(--sombra-card);
+  animation: fadeUp 0.4s ease both;
+}
+
+.obra-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+
+.obra-status-badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 4px 12px; border-radius: 100px;
+  background: var(--accent-soft); color: var(--accent);
+  margin-bottom: 10px;
+}
+.obra-status-badge.finalizada { background: var(--verde-soft); color: var(--verde); }
+.obra-status-badge.arquivada  { background: var(--cinza-soft); color: var(--texto-muted); border: 1px solid var(--borda); }
+
+.obra-nome {
+  font-family: var(--font-display); font-size: clamp(24px, 4vw, 36px);
+  font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px;
+  color: var(--texto); line-height: 1.1; margin-bottom: 8px;
+}
+
+.obra-meta { font-size: 13px; color: var(--texto-muted); display: flex; gap: 16px; flex-wrap: wrap; }
+.obra-meta span { display: flex; align-items: center; gap: 5px; }
+.obra-meta svg { width: 13px; height: 13px; }
+
+/* Botões de ação da obra */
+.obra-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+
+.btn-obra-action {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--borda); transition: all var(--transition);
+  white-space: nowrap;
+}
+.btn-obra-action svg { width: 15px; height: 15px; }
+.btn-obra-action.edit   { background: var(--cinza-soft); color: var(--texto-sub); }
+.btn-obra-action.edit:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.btn-obra-action.finalizar { background: var(--verde-soft); color: var(--verde); border-color: rgba(39,174,96,0.2); }
+.btn-obra-action.finalizar:hover { background: var(--verde); color: #fff; border-color: var(--verde); }
+.btn-obra-action.arquivar  { background: var(--erro-soft); color: var(--erro); border-color: rgba(224,85,85,0.2); }
+.btn-obra-action.arquivar:hover  { background: var(--erro); color: #fff; border-color: var(--erro); }
+
+/* Stats rápidos */
+.obra-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 14px; background: var(--cinza-soft);
+  border: 1px solid var(--borda); border-radius: 100px;
+  font-size: 13px; color: var(--texto-sub); font-weight: 500;
+}
+.stat-pill svg { width: 14px; height: 14px; color: var(--accent); }
+
+/* ─── Tabs ───────────────────────────────────── */
+.tabs-bar {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  background: var(--input-bg); border: 1px solid var(--borda);
+  border-radius: var(--radius-sm); padding: 4px;
+  width: fit-content;
+  animation: fadeUp 0.4s 0.05s ease both;
+}
+
+.tab-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border: none; border-radius: 6px;
+  background: none; color: var(--texto-muted);
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition); white-space: nowrap;
+}
+.tab-btn svg { width: 15px; height: 15px; }
+.tab-btn.active { background: var(--accent); color: var(--bg); }
+.tab-btn:not(.active):hover { background: var(--cinza-soft); color: var(--texto); }
+
+.tab-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px;
+  background: rgba(0,0,0,0.15); border-radius: 100px;
+  font-size: 11px; font-weight: 700;
+}
+.tab-btn.active .tab-count { background: rgba(0,0,0,0.2); }
+
+/* ─── Tab panels ─────────────────────────────── */
+.tab-panel { display: none; animation: fadeUp 0.3s ease both; }
+.tab-panel.active { display: block; }
+
+.tab-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.tab-info { font-size: 13px; color: var(--texto-muted); }
+
+.btn-add-item {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; background: var(--accent); color: var(--bg);
+  border: none; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 13px; font-weight: 700;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.3px;
+  transition: all var(--transition);
+}
+.btn-add-item:hover { background: var(--accent-dark); box-shadow: 0 4px 12px var(--accent-glow); transform: translateY(-1px); }
+.btn-add-item svg { width: 14px; height: 14px; }
+.btn-add-item:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ─── Grid de caminhões ──────────────────────── */
+.caminhoes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.caminhao-card {
+  background: var(--card); border: 1px solid var(--borda);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--sombra-card);
+  animation: fadeUp 0.3s ease both;
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+.caminhao-card:hover { border-color: var(--borda-light); transform: translateY(-2px); box-shadow: var(--sombra); }
+
+.caminhao-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 18px 18px 12px; gap: 10px;
+}
+
+.caminhao-info { flex: 1; min-width: 0; }
+.caminhao-numero {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--texto-muted); margin-bottom: 4px;
+}
+.caminhao-nome {
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  color: var(--texto); text-transform: uppercase; letter-spacing: -0.2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.caminhao-placa {
+  font-size: 12px; color: var(--texto-muted); margin-top: 3px;
+  font-family: monospace; letter-spacing: 1px;
+}
+
+.caminhao-card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.btn-card-action {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  background: var(--cinza-soft); border: 1px solid var(--borda);
+  border-radius: var(--radius-sm); color: var(--texto-muted);
+  cursor: pointer; transition: all var(--transition);
+}
+.btn-card-action svg { width: 13px; height: 13px; }
+.btn-card-action:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.btn-card-action.danger:hover { background: var(--erro-soft); border-color: rgba(224,85,85,0.3); color: var(--erro); }
+
+/* Seção de pneus do caminhão (múltiplos) */
+.caminhao-pneus-section {
+  padding: 0 18px 18px;
+}
+
+.pneus-chips-wrap {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  min-height: 36px;
+  padding: 10px 12px;
+  background: var(--cinza-soft); border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  align-content: flex-start;
+}
+
+.pneu-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px 5px 8px;
+  background: var(--accent-soft); border: 1px solid var(--accent-glow);
+  border-radius: 100px;
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  color: var(--texto); animation: fadeUp 0.2s ease both;
+}
+.pneu-chip svg { color: var(--accent); flex-shrink: 0; }
+
+.pneu-chip-remove {
+  width: 16px; height: 16px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer;
+  color: var(--texto-muted); border-radius: 50%;
+  transition: all var(--transition); padding: 0; margin-left: 2px;
+}
+.pneu-chip-remove:hover { background: var(--erro-soft); color: var(--erro); }
+.pneu-chip-remove svg { width: 11px; height: 11px; }
+
+.pneu-vazio-hint {
+  font-size: 12px; color: var(--texto-muted); font-style: italic;
+  align-self: center; padding: 4px 0;
+}
+
+.caminhao-pneus-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+
+.pneus-count {
+  font-size: 12px; color: var(--texto-muted); font-weight: 600;
+}
+
+.btn-add-pneu-caminhao {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  background: var(--accent); color: var(--bg);
+  border: none; font-family: var(--font-body); font-size: 12px; font-weight: 700;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.2px;
+  transition: all var(--transition);
+}
+.btn-add-pneu-caminhao:hover { background: var(--accent-dark); box-shadow: 0 3px 10px var(--accent-glow); }
+.btn-add-pneu-caminhao svg  { width: 12px; height: 12px; }
+.btn-add-pneu-caminhao:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+/* ─── Lista de pneus ─────────────────────────── */
+.pneu-filter-tabs {
+  display: flex; background: var(--input-bg);
+  border: 1px solid var(--borda); border-radius: var(--radius-sm);
+  padding: 3px; gap: 2px;
+}
+.pf-btn {
+  padding: 6px 14px; border: none; border-radius: 5px;
+  background: none; color: var(--texto-muted);
+  font-family: var(--font-body); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+}
+.pf-btn.active { background: var(--accent); color: var(--bg); }
+.pf-btn:not(.active):hover { background: var(--cinza-soft); color: var(--texto); }
+
+.pneus-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.pneu-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  background: var(--card); border: 1px solid var(--borda);
+  border-radius: var(--radius-sm); box-shadow: var(--sombra-card);
+  animation: fadeUp 0.25s ease both;
+}
+.pneu-item.em_uso { border-color: var(--accent-glow); background: var(--card); }
+
+.pneu-item-icone {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.pneu-item.disponivel .pneu-item-icone { background: var(--verde-soft); color: var(--verde); border: 1.5px solid rgba(39,174,96,0.2); }
+.pneu-item.em_uso     .pneu-item-icone { background: var(--accent-soft); color: var(--accent); border: 1.5px solid var(--accent-glow); }
+.pneu-item-icone svg { width: 17px; height: 17px; }
+
+.pneu-item-info { flex: 1; min-width: 0; }
+.pneu-item-num { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pneu-item-status { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+.pneu-item.disponivel .pneu-item-status { color: var(--verde); }
+.pneu-item.em_uso     .pneu-item-status { color: var(--accent); }
+.pneu-item-caminhao { font-size: 11px; color: var(--texto-muted); margin-top: 1px; }
+
+/* ─── Histórico de trocas ────────────────────── */
+.historico-lista { display: flex; flex-direction: column; gap: 10px; }
+
+.troca-item {
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: 16px; align-items: center;
+  padding: 16px 20px;
+  background: var(--card); border: 1px solid var(--borda);
+  border-radius: var(--radius-sm); box-shadow: var(--sombra-card);
+  animation: fadeUp 0.25s ease both;
+}
+
+.troca-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.troca-icon svg { width: 18px; height: 18px; }
+
+.troca-info { min-width: 0; }
+.troca-caminhao { font-family: var(--font-display); font-size: 16px; font-weight: 700; text-transform: uppercase; color: var(--texto); }
+.troca-detalhe {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 13px; color: var(--texto-sub); margin-top: 4px;
+}
+.troca-pneu-saiu  { color: var(--erro);  font-weight: 600; }
+.troca-arrow      { color: var(--texto-muted); }
+.troca-pneu-entrou{ color: var(--verde); font-weight: 600; }
+.troca-usuario    { font-size: 12px; color: var(--texto-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+.troca-data       { font-size: 12px; color: var(--texto-muted); text-align: right; white-space: nowrap; }
+
+/* Badges de adição/remoção */
+.troca-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px; border-radius: 100px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+}
+.troca-badge.add { background: var(--verde-soft); color: var(--verde); border: 1px solid rgba(39,174,96,0.25); }
+.troca-badge.rem { background: var(--erro-soft);  color: var(--erro);  border: 1px solid rgba(224,85,85,0.25); }
+
+/* Botão "Ver mais" no histórico */
+.btn-mais-trocas {
+  width: 100%;
+  padding: 12px;
+  background: var(--cinza-soft);
+  border: 1px dashed var(--borda-light);
+  border-radius: var(--radius-sm);
+  color: var(--texto-sub);
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+  margin-top: 8px;
+}
+.btn-mais-trocas:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+/* ─── Estados ────────────────────────────────── */
+.state-loading, .state-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 56px 24px;
+  color: var(--texto-muted); text-align: center;
+  grid-column: 1 / -1;
+}
+.spinner { width: 30px; height: 30px; border: 3px solid var(--borda); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+.state-empty svg { width: 48px; height: 48px; color: var(--borda-light); }
+.state-empty h3 { font-family: var(--font-display); font-size: 18px; font-weight: 700; text-transform: uppercase; color: var(--texto-sub); }
+.state-empty p { font-size: 13px; }
+.historico-lista .state-empty, .historico-lista .state-loading { grid-column: unset; }
+
+/* ─── Modais ─────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--overlay); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; animation: fadeIn 0.2s ease;
+}
+.modal {
+  background: var(--card); border: 1px solid var(--borda-light);
+  border-radius: var(--radius); width: 100%; max-width: 500px;
+  box-shadow: var(--sombra); animation: slideUp 0.25s ease;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-sm { max-width: 400px; }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 24px 0; gap: 12px; }
+.modal-title { font-family: var(--font-display); font-size: 21px; font-weight: 700; text-transform: uppercase; color: var(--texto); }
+.modal-subtitle { padding: 4px 24px 0; font-size: 13px; color: var(--texto-sub); }
+.modal-subtitle strong { color: var(--texto); }
+.modal-close { width: 28px; height: 28px; background: none; border: none; cursor: pointer; color: var(--texto-muted); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-xs); transition: all var(--transition); flex-shrink: 0; }
+.modal-close:hover { background: var(--cinza-soft); color: var(--texto); }
+.modal-close svg { width: 15px; height: 15px; }
+.modal-body { padding: 16px 24px; }
+.modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--borda); }
+
+.field-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+.field-group:last-child { margin-bottom: 0; }
+.field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texto-muted); }
+.optional { font-weight: 400; color: var(--texto-muted); text-transform: none; letter-spacing: 0; }
+.field-input {
+  width: 100%; padding: 11px 14px;
+  background: var(--input-bg); border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm); color: var(--texto);
+  font-family: var(--font-body); font-size: 14px; outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.field-input::placeholder { color: var(--texto-muted); opacity: 0.5; }
+.field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.field-input.is-error { border-color: var(--erro); box-shadow: 0 0 0 3px var(--erro-soft); }
+.field-error { font-size: 12px; color: var(--erro); min-height: 16px; }
+
+/* Pneu atual no modal */
+.pneu-atual-box {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 14px; margin-bottom: 14px;
+  background: var(--accent-soft); border: 1px solid var(--accent-glow);
+  border-radius: var(--radius-sm);
+}
+.pneu-atual-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--accent); }
+.pneu-atual-num { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--texto); flex: 1; }
+.btn-remover-pneu-caminhao {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; font-size: 12px; font-weight: 600;
+  background: var(--erro-soft); color: var(--erro);
+  border: 1px solid rgba(224,85,85,0.2); border-radius: var(--radius-sm);
+  cursor: pointer; transition: all var(--transition);
+}
+.btn-remover-pneu-caminhao:hover { background: var(--erro); color: #fff; border-color: var(--erro); }
+.btn-remover-pneu-caminhao svg { width: 13px; height: 13px; }
+
+/* ── Modal atribuir pneus ── */
+
+/* Cabeçalho do modal com busca + botão selecionar todos */
+.atribuir-modal-toolbar {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.atribuir-busca-wrap {
+  flex: 1; position: relative;
+}
+.atribuir-busca-wrap svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 15px; height: 15px; color: var(--texto-muted); pointer-events: none;
+}
+#atribuirBusca {
+  width: 100%; padding: 8px 10px 8px 32px;
+  background: var(--input-bg); border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 13px;
+  color: var(--texto); transition: border-color var(--transition);
+}
+#atribuirBusca:focus { outline: none; border-color: var(--accent); }
+#atribuirBusca::placeholder { color: var(--texto-muted); }
+
+#btnSelecionarTodos {
+  white-space: nowrap; padding: 8px 12px;
+  background: var(--cinza-soft); border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 12px;
+  font-weight: 600; color: var(--texto-sub); cursor: pointer;
+  transition: all var(--transition); flex-shrink: 0;
+}
+#btnSelecionarTodos:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+/* Lista */
+.pneu-select-lista {
+  max-height: 260px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 5px;
+  border: 1.5px solid var(--borda); border-radius: var(--radius-sm);
+  padding: 8px; background: var(--input-bg);
+  scroll-behavior: smooth;
+}
+.pneu-select-lista.is-error { border-color: var(--erro); }
+
+.pneu-select-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: all var(--transition);
+  border: 1.5px solid transparent; user-select: none;
+}
+.pneu-select-item:hover { background: var(--cinza-soft); }
+.pneu-select-item.selected {
+  background: var(--accent-soft); border-color: var(--accent);
+}
+
+.pneu-select-icone {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--verde-soft); color: var(--verde);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.pneu-select-icone svg { width: 15px; height: 15px; }
+.pneu-select-item.selected .pneu-select-icone {
+  background: var(--accent-soft); color: var(--accent);
+}
+.pneu-select-num {
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  color: var(--texto); flex: 1; letter-spacing: 0.3px;
+}
+
+/* Checkbox circular */
+.pneu-select-check {
+  width: 20px; height: 20px; flex-shrink: 0;
+  border: 2px solid var(--borda-light); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition); color: transparent;
+}
+.pneu-select-check svg { width: 11px; height: 11px; }
+.pneu-select-item.selected .pneu-select-check {
+  background: var(--accent); border-color: var(--accent); color: var(--bg);
+}
+
+/* Contador de resultados */
+.atribuir-dica {
+  font-size: 11px; color: var(--texto-muted);
+  padding: 2px 4px 6px; letter-spacing: 0.2px;
+}
+
+/* Estado vazio dentro do modal */
+.atribuir-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 28px 16px; color: var(--texto-muted); text-align: center;
+}
+.atribuir-empty svg { opacity: 0.35; }
+.atribuir-empty p { font-size: 13px; font-weight: 600; color: var(--texto-sub); margin: 0; }
+.atribuir-empty span { font-size: 12px; }
+.atribuir-empty strong { color: var(--accent); }
+
+/* Loading dentro do modal */
+.atribuir-loading {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 28px 0; color: var(--texto-muted); font-size: 13px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.atribuir-loading .spin { animation: spin 0.8s linear infinite; color: var(--accent); }
+
+.sem-pneus {
+  font-size: 13px; color: var(--texto-muted); text-align: center; padding: 16px 0;
+}
+
+/* Botões de ação modal */
+.btn-cancelar { padding: 9px 18px; background: var(--cinza-soft); border: 1px solid var(--borda); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--texto-sub); cursor: pointer; transition: all var(--transition); }
+.btn-cancelar:hover { background: var(--borda); color: var(--texto); }
+.btn-salvar  { display: flex; align-items: center; gap: 8px; padding: 9px 20px; background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px; font-weight: 700; cursor: pointer; transition: all var(--transition); }
+.btn-salvar:hover { background: var(--accent-dark); }
+.btn-salvar:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-success { display: flex; align-items: center; gap: 8px; padding: 9px 20px; background: var(--verde); color: #fff; border: none; border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px; font-weight: 700; cursor: pointer; transition: all var(--transition); }
+.btn-success:hover { background: #1a8a44; }
+.btn-success:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-danger  { display: flex; align-items: center; gap: 8px; padding: 9px 20px; background: var(--erro); color: #fff; border: none; border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px; font-weight: 700; cursor: pointer; transition: all var(--transition); }
+.btn-danger:hover { background: #c0392b; }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-loader { display: flex; align-items: center; gap: 8px; }
+.btn-loader svg { width: 14px; height: 14px; animation: spin 0.8s linear infinite; }
+
+/* Confirm body */
+.confirm-body { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 8px 0; }
+.confirm-icon { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.confirm-icon.success { background: var(--verde-soft); color: var(--verde); }
+.confirm-icon.danger  { background: var(--erro-soft);  color: var(--erro); }
+.confirm-icon svg { width: 26px; height: 26px; }
+.confirm-body p { font-size: 14px; color: var(--texto); line-height: 1.5; }
+.confirm-hint { font-size: 12px !important; color: var(--texto-muted) !important; }
+
+/* ─── Toast ──────────────────────────────────── */
+.toast { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; align-items: center; gap: 10px; padding: 13px 18px; background: var(--surface); border: 1px solid var(--borda-light); border-radius: var(--radius-sm); box-shadow: var(--sombra); font-size: 14px; font-weight: 500; color: var(--texto); animation: slideInRight 0.3s ease; max-width: 360px; }
+.toast.success { border-left: 3px solid var(--verde); }
+.toast.error   { border-left: 3px solid var(--erro); }
+.toast-icon    { font-size: 16px; flex-shrink: 0; }
+
+/* ─── Animações ──────────────────────────────── */
+@keyframes fadeUp      { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn      { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp     { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInRight{ from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes spin        { to { transform: rotate(360deg); } }
+
+/* ─── Responsivo ─────────────────────────────── */
+@media (max-width: 768px) {
+  .navbar { padding: 0 16px; }
+  .main-content { padding: 20px 16px 60px; }
+  .obra-header { padding: 20px; }
+  .obra-header-top { flex-direction: column; }
+  .obra-actions { width: 100%; }
+  .tabs-bar { width: 100%; }
+  .tab-btn { flex: 1; justify-content: center; padding: 8px 10px; }
+  .caminhoes-grid { grid-template-columns: 1fr; }
+  .pneus-lista { grid-template-columns: 1fr 1fr; }
+  .troca-item { grid-template-columns: auto 1fr; }
+  .troca-data { display: none; }
+}
+
+@media (max-width: 480px) {
+  .pneus-lista { grid-template-columns: 1fr; }
+  .tab-btn span:not(.tab-count) { display: none; }
+  .tab-btn svg { display: block; }
+}

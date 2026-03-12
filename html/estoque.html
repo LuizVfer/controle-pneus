@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estoque de Pneus — Controle de Pneus</title>
+  <script>
+    (function() {
+      const t = localStorage.getItem('cp-theme');
+      const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t || sys);
+    })();
+  </script>
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/estoque.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="navbar">
+    <div class="navbar-brand">
+      <a href="dashboard.html" class="back-btn" title="Voltar ao dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </a>
+      <div class="navbar-icon">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="14" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="4" fill="currentColor"/>
+          <line x1="32" y1="4"  x2="32" y2="18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="46" x2="32" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="4"  y1="32" x2="18" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="46" y1="32" x2="60" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="navbar-title">CONTROLE <strong>DE PNEUS</strong></span>
+    </div>
+    <div class="navbar-right">
+      <button class="theme-toggle" title="Alternar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <div class="user-avatar" id="userAvatar">?</div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <div class="page-header">
+      <div>
+        <p class="page-breadcrumb">Dashboard / Estoque</p>
+        <h1 class="page-title">Estoque de Pneus</h1>
+      </div>
+      <button class="btn-add-estoque" id="btnAddEstoque">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Adicionar Pneus
+      </button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <span class="kpi-label">Total no estoque</span>
+        <span class="kpi-value" id="kpiTotal">—</span>
+      </div>
+      <div class="kpi-card verde">
+        <span class="kpi-label">Disponíveis</span>
+        <span class="kpi-value" id="kpiDisponivel">—</span>
+      </div>
+      <div class="kpi-card accent">
+        <span class="kpi-label">Em Uso</span>
+        <span class="kpi-value" id="kpiEmUso">—</span>
+      </div>
+      <div class="kpi-card danger">
+        <span class="kpi-label">Inutilizáveis</span>
+        <span class="kpi-value" id="kpiInutilizavel">—</span>
+      </div>
+    </div>
+
+    <!-- Filtros e busca -->
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button class="ftab active" data-filtro="todos">Todos</button>
+        <button class="ftab" data-filtro="disponivel">Disponíveis</button>
+        <button class="ftab" data-filtro="em_uso">Em Uso</button>
+        <button class="ftab" data-filtro="inutilizavel">Inutilizáveis</button>
+      </div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por número..." />
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-loading" id="stateLoading">
+      <div class="spinner"></div>
+      <p>Carregando estoque...</p>
+    </div>
+
+    <!-- Grade de pneus -->
+    <div class="pneus-grid" id="pneusGrid" style="display:none"></div>
+
+    <!-- Estado vazio -->
+    <div class="state-empty" id="stateEmpty" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+      </svg>
+      <h3 id="emptyTitle">Nenhum pneu encontrado</h3>
+      <p id="emptyMsg">Clique em "Adicionar Pneus" para cadastrar pneus no estoque global.</p>
+    </div>
+
+  </main>
+
+  <!-- MODAL: Adicionar pneus -->
+  <div class="modal-overlay" id="modalAddEstoque" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Adicionar Pneus ao Estoque</h3>
+          <p class="modal-sub">Numerados automaticamente: PNE-0001, PNE-0002…</p>
+        </div>
+        <button class="modal-close" data-close="modalAddEstoque">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label class="field-label">Quantidade de pneus a adicionar</label>
+        <div class="qty-control">
+          <button class="qty-btn" id="qtyMinus">−</button>
+          <input type="number" id="qtdPneus" class="qty-input" value="1" min="1" max="200" />
+          <button class="qty-btn" id="qtyPlus">+</button>
+        </div>
+        <p class="qty-hint" id="qtyHint">1 pneu será adicionado ao estoque global</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalAddEstoque">Cancelar</button>
+        <button class="btn-primary-sm" id="salvarAddEstoque">
+          <span class="btn-text">Confirmar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Inutilizar pneu -->
+  <div class="modal-overlay" id="modalInutilizar" style="display:none">
+    <div class="modal">
+      <div class="modal-header danger">
+        <div class="modal-header-icon danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Inutilizar Pneu</h3>
+          <p class="modal-sub">Este pneu sairá de circulação permanentemente</p>
+        </div>
+        <button class="modal-close" data-close="modalInutilizar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="inut-info-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+          </svg>
+          <div>
+            <div class="inut-pneu-num" id="inutPneuNum">—</div>
+            <div class="inut-pneu-status" id="inutPneuStatus">—</div>
+          </div>
+        </div>
+
+        <label class="field-label" style="margin-bottom:10px;display:block">Motivo da inutilização</label>
+        <div class="motivo-grid">
+          <label class="motivo-opt">
+            <input type="radio" name="motivo" value="Furou" />
+            <span class="motivo-face">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+              </svg>
+              Furou
+            </span>
+          </label>
+          <label class="motivo-opt">
+            <input type="radio" name="motivo" value="Desgaste excessivo" />
+            <span class="motivo-face">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Desgaste
+            </span>
+          </label>
+          <label class="motivo-opt">
+            <input type="radio" name="motivo" value="Dano físico" />
+            <span class="motivo-face">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+              </svg>
+              Dano físico
+            </span>
+          </label>
+          <label class="motivo-opt">
+            <input type="radio" name="motivo" value="livre" />
+            <span class="motivo-face">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="8" x2="21" y2="8"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="16" x2="15" y2="16"/>
+              </svg>
+              Outro
+            </span>
+          </label>
+        </div>
+        <div id="motivoLivreWrap" style="display:none;margin-top:10px">
+          <input type="text" id="motivoLivreInput" class="field-input" placeholder="Descreva o motivo..." maxlength="120" />
+        </div>
+        <span class="field-error" id="motivoError"></span>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalInutilizar">Cancelar</button>
+        <button class="btn-danger-sm" id="confirmarInutilizar">
+          <span class="btn-text">Inutilizar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Confirmar reativar -->
+  <div class="modal-overlay" id="modalReativar" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div class="modal-header-icon verde">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Reativar Pneu</h3>
+          <p class="modal-sub">O pneu voltará ao estoque como disponível</p>
+        </div>
+        <button class="modal-close" data-close="modalReativar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-confirm-msg">Deseja reativar o pneu <strong id="reativarNum">—</strong> e devolvê-lo ao estoque?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalReativar">Cancelar</button>
+        <button class="btn-verde-sm" id="confirmarReativar">
+          <span class="btn-text">Reativar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/estoque.js"></script>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Obra — Controle de Pneus</title>
+  <script>
+    (function() {
+      const t = localStorage.getItem('cp-theme');
+      const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t || sys);
+    })();
+  </script>
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/obra.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <!-- ── Navbar ─────────────────────────────── -->
+  <header class="navbar">
+    <div class="navbar-brand">
+      <a href="dashboard.html" class="back-btn" title="Voltar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </a>
+      <div class="navbar-icon">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="14" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="4" fill="currentColor"/>
+          <line x1="32" y1="4"  x2="32" y2="18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="46" x2="32" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="4"  y1="32" x2="18" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="46" y1="32" x2="60" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="navbar-title">CONTROLE <strong>DE PNEUS</strong></span>
+    </div>
+    <div class="navbar-right">
+      <button class="theme-toggle" title="Alternar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <div class="user-avatar" id="userAvatar">?</div>
+    </div>
+  </header>
+
+  <!-- ── Loading inicial ────────────────────── -->
+  <div class="page-loading" id="pageLoading">
+    <div class="spinner-lg"></div>
+    <p>Carregando obra...</p>
+  </div>
+
+  <!-- ── Conteúdo principal ─────────────────── -->
+  <main class="main-content" id="mainContent" style="display:none">
+
+    <!-- ── Header da obra ─────────────────── -->
+    <div class="obra-header">
+      <div class="obra-header-top">
+        <div class="obra-header-info">
+          <div class="obra-status-badge" id="obraStatusBadge">Em aberto</div>
+          <h1 class="obra-nome" id="obraNome">—</h1>
+          <div class="obra-meta" id="obraMeta"></div>
+        </div>
+        <div class="obra-actions" id="obraActions"></div>
+      </div>
+
+      <!-- Stats rápidos -->
+      <div class="obra-stats" id="obraStats">
+        <div class="stat-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="3" width="15" height="13" rx="2"/>
+            <path d="M16 8h4l3 3v5h-7V8z"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+          <span id="statCaminhoes">0 caminhões</span>
+        </div>
+        <div class="stat-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+          </svg>
+          <span id="statPneus">0 pneus</span>
+        </div>
+        <div class="stat-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span id="statTempo">—</span>
+        </div>
+        <div class="stat-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span id="statCriador">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tabs ───────────────────────────── -->
+    <div class="tabs-bar">
+      <button class="tab-btn active" data-tab="caminhoes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13" rx="2"/>
+          <path d="M16 8h4l3 3v5h-7V8z"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+        Caminhões
+        <span class="tab-count" id="tabCountCaminhoes">0</span>
+      </button>
+      <button class="tab-btn" data-tab="pneus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+        </svg>
+        Pneus
+        <span class="tab-count" id="tabCountPneus">0</span>
+      </button>
+      <button class="tab-btn" data-tab="historico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Histórico
+        <span class="tab-count" id="tabCountTrocas">0</span>
+      </button>
+    </div>
+
+    <!-- ── Tab: Caminhões ─────────────────── -->
+    <div class="tab-panel active" id="tabCaminhoes">
+      <div class="tab-toolbar">
+        <span class="tab-info" id="infoCaminhoes">Caminhões desta obra</span>
+        <button class="btn-add-item" id="btnAddCaminhao">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Adicionar Caminhão
+        </button>
+      </div>
+      <div class="caminhoes-grid" id="caminhoesGrid">
+        <div class="state-loading" id="loadingCaminhoes">
+          <div class="spinner"></div><p>Carregando...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Pneus ─────────────────────── -->
+    <div class="tab-panel" id="tabPneus">
+      <div class="tab-toolbar">
+        <div class="pneu-filter-tabs">
+          <button class="pf-btn active" data-pf="todos">Todos</button>
+          <button class="pf-btn" data-pf="disponivel">Disponíveis</button>
+          <button class="pf-btn" data-pf="em_uso">Em uso</button>
+        </div>
+
+      </div>
+      <div class="pneus-lista" id="pneusLista">
+        <div class="state-loading" id="loadingPneus">
+          <div class="spinner"></div><p>Carregando...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Tab: Histórico ─────────────────── -->
+    <div class="tab-panel" id="tabHistorico">
+      <div class="tab-toolbar">
+        <span class="tab-info" id="infoHistorico">Registro de todas as trocas</span>
+      </div>
+      <div class="historico-lista" id="historicoLista">
+        <div class="state-loading" id="loadingHistorico">
+          <div class="spinner"></div><p>Carregando...</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════
+       MODAIS
+  ══════════════════════════════════════════ -->
+
+  <!-- Modal: Editar nome da obra -->
+  <div class="modal-overlay" id="modalEditarNome" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Editar Nome</h2>
+        <button class="modal-close" data-modal="modalEditarNome">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label class="field-label">Nome da Obra *</label>
+          <input type="text" id="editNomeObra" class="field-input" placeholder="Nome da obra" maxlength="100" />
+          <span class="field-error" id="editNomeObraError"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalEditarNome">Cancelar</button>
+        <button class="btn-salvar" id="salvarNomeObra">
+          <span class="btn-text">Salvar</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Adicionar caminhão -->
+  <div class="modal-overlay" id="modalAddCaminhao" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Adicionar Caminhão</h2>
+        <button class="modal-close" data-modal="modalAddCaminhao">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label class="field-label">Nome do Caminhão *</label>
+          <input type="text" id="addCaminhaoNome" class="field-input" placeholder="Ex: Scania R450" maxlength="60" />
+          <span class="field-error" id="addCaminhaoNomeError"></span>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Placa <span class="optional">(opcional)</span></label>
+          <input type="text" id="addCaminhaoPlaca" class="field-input" placeholder="Ex: ABC-1234" maxlength="10" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalAddCaminhao">Cancelar</button>
+        <button class="btn-salvar" id="salvarAddCaminhao">
+          <span class="btn-text">Adicionar</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Modal: Atribuir / Trocar pneu -->
+  <div class="modal-overlay" id="modalAtribuirPneu" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="modalAtribuirTitle">Atribuir Pneu</h2>
+          <p class="modal-subtitle">Caminhão: <strong id="modalAtribuirCaminhao">—</strong></p>
+        </div>
+        <button class="modal-close" data-modal="modalAtribuirPneu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Busca + Selecionar todos -->
+        <div class="atribuir-modal-toolbar">
+          <div class="atribuir-busca-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="atribuirBusca" placeholder="Buscar por número..." autocomplete="off" />
+          </div>
+          <button id="btnSelecionarTodos" type="button" style="display:none">Selecionar todos</button>
+        </div>
+
+        <div class="field-group">
+          <div class="pneu-select-lista" id="pneuSelectLista"></div>
+          <span class="field-error" id="atribuirPneuError"></span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalAtribuirPneu">Cancelar</button>
+        <button class="btn-salvar" id="salvarAtribuirPneu">
+          <span class="btn-text">Adicionar</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar finalizar -->
+  <div class="modal-overlay" id="modalFinalizar" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title" style="color:var(--verde)">Finalizar Obra</h2>
+        <button class="modal-close" data-modal="modalFinalizar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-body">
+          <div class="confirm-icon success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <p>Deseja finalizar a obra <strong id="finalizarNomeObra">—</strong>?</p>
+          <p class="confirm-hint">A obra será marcada como finalizada. Você ainda poderá visualizá-la nos relatórios.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalFinalizar">Cancelar</button>
+        <button class="btn-success" id="confirmarFinalizar">
+          <span class="btn-text">Finalizar</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar arquivar -->
+  <div class="modal-overlay" id="modalArquivar" style="display:none">
+    <div class="modal modal-sm modal-danger">
+      <div class="modal-header">
+        <h2 class="modal-title" style="color:var(--erro)">Arquivar Obra</h2>
+        <button class="modal-close" data-modal="modalArquivar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-body">
+          <div class="confirm-icon danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <p>Deseja arquivar a obra <strong id="arquivarNomeObra">—</strong>?</p>
+          <p class="confirm-hint">A obra ficará arquivada e não aparecerá mais na lista principal, mas os dados serão mantidos.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalArquivar">Cancelar</button>
+        <button class="btn-danger" id="confirmarArquivar">
+          <span class="btn-text">Arquivar</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar remover caminhão -->
+  <div class="modal-overlay" id="modalRemoverCaminhao" style="display:none">
+    <div class="modal modal-sm modal-danger">
+      <div class="modal-header">
+        <h2 class="modal-title" style="color:var(--erro)">Remover Caminhão</h2>
+        <button class="modal-close" data-modal="modalRemoverCaminhao">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-body">
+          <div class="confirm-icon danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            </svg>
+          </div>
+          <p>Remover o caminhão <strong id="removerCaminhaoNome">—</strong>?</p>
+          <p class="confirm-hint">O pneu associado (se houver) será liberado para uso.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalRemoverCaminhao">Cancelar</button>
+        <button class="btn-danger" id="confirmarRemoverCaminhao">
+          <span class="btn-text">Remover</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" style="display:none">
+    <span class="toast-icon"></span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/obra.js"></script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+/* ============================================================
+   theme.css — Sistema de temas global (Dark / Light)
+   Inclua este arquivo PRIMEIRO em todas as páginas
+   ============================================================ */
+
+/* ─── TEMA ESCURO (padrão) ───────────────────── */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:           #0F1117;
+  --surface:      #161C2A;
+  --card:         #1C2338;
+  --card-hover:   #212A42;
+
+  --borda:        #28324A;
+  --borda-light:  #34405C;
+
+  --texto:        #E4EAF6;
+  --texto-sub:    #8A9BB8;
+  --texto-muted:  #4F607D;
+
+  --accent:       #E8B400;
+  --accent-dark:  #C49A00;
+  --accent-soft:  rgba(232,180,0,0.12);
+  --accent-glow:  rgba(232,180,0,0.20);
+
+  --verde:        #27AE60;
+  --verde-soft:   rgba(39,174,96,0.12);
+  --erro:         #E05555;
+  --erro-soft:    rgba(224,85,85,0.12);
+  --azul:         #3B9EFF;
+  --azul-soft:    rgba(59,158,255,0.12);
+
+  --cinza-soft:   rgba(255,255,255,0.04);
+  --overlay:      rgba(0,0,0,0.65);
+  --sombra:       0 8px 32px rgba(0,0,0,0.50);
+  --sombra-card:  0 2px 12px rgba(0,0,0,0.35);
+
+  --grid-color:   rgba(232,180,0,0.035);
+  --navbar-bg:    rgba(15,17,23,0.90);
+  --input-bg:     #181F30;
+}
+
+/* ─── TEMA CLARO ─────────────────────────────── */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:           #EEF2FA;
+  --surface:      #FFFFFF;
+  --card:         #FFFFFF;
+  --card-hover:   #F5F8FF;
+
+  --borda:        #D8E0EE;
+  --borda-light:  #C4CFDF;
+
+  --texto:        #1A2035;
+  --texto-sub:    #4A5878;
+  --texto-muted:  #8896B0;
+
+  --accent:       #B38800;
+  --accent-dark:  #8A6800;
+  --accent-soft:  rgba(179,136,0,0.10);
+  --accent-glow:  rgba(179,136,0,0.16);
+
+  --verde:        #1E9E52;
+  --verde-soft:   rgba(30,158,82,0.10);
+  --erro:         #D04040;
+  --erro-soft:    rgba(208,64,64,0.10);
+  --azul:         #2276D4;
+  --azul-soft:    rgba(34,118,212,0.10);
+
+  --cinza-soft:   rgba(0,0,0,0.04);
+  --overlay:      rgba(0,0,0,0.45);
+  --sombra:       0 8px 32px rgba(100,120,160,0.15);
+  --sombra-card:  0 2px 12px rgba(100,120,160,0.10);
+
+  --grid-color:   rgba(0,0,0,0.04);
+  --navbar-bg:    rgba(255,255,255,0.88);
+  --input-bg:     #F2F5FC;
+}
+
+/* ─── Variáveis fixas ────────────────────────── */
+:root {
+  --radius:       12px;
+  --radius-sm:    8px;
+  --radius-xs:    6px;
+  --transition:   0.2s ease;
+  --navbar-h:     64px;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body:    'Barlow', sans-serif;
+}
+
+/* ─── Reset base ─────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--texto);
+  min-height: 100vh;
+}
+
+/* ─── Transição suave de tema ────────────────── */
+body,
+body * {
+  transition:
+    background-color 0.28s ease,
+    border-color 0.28s ease,
+    color 0.28s ease,
+    box-shadow 0.28s ease;
+}
+
+/* Exceção — elementos com transform próprio */
+.obra-card,
+.btn-primary,
+.btn-secondary,
+.btn-login,
+.theme-toggle svg {
+  transition:
+    background-color 0.28s ease,
+    border-color 0.28s ease,
+    color 0.28s ease,
+    box-shadow 0.28s ease,
+    transform 0.2s ease;
+}
+
+/* ─── Botão de toggle de tema ────────────────── */
+.theme-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--cinza-soft);
+  border: 1px solid var(--borda);
+  color: var(--texto-sub);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.theme-toggle svg {
+  width: 17px;
+  height: 17px;
+}
+
+.theme-toggle:hover svg { transform: rotate(20deg); }
+
+/* Troca de ícone */
+.icon-sun  { display: none; }
+.icon-moon { display: block; }
+[data-theme="light"] .icon-sun  { display: block; }
+[data-theme="light"] .icon-moon { display: none; }
+
+/* ─── Grid de fundo global ───────────────────── */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Scrollbar ──────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--borda-light); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--texto-muted); }

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nova Obra — Controle de Pneus</title>
+  <script>
+    (function() {
+      const t = localStorage.getItem('cp-theme');
+      const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t || sys);
+    })();
+  </script>
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/nova-obra.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <!-- ── Navbar ─────────────────────────────── -->
+  <header class="navbar">
+    <div class="navbar-brand">
+      <a href="dashboard.html" class="back-btn" title="Voltar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </a>
+      <div class="navbar-icon">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="14" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="4" fill="currentColor"/>
+          <line x1="32" y1="4"  x2="32" y2="18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="46" x2="32" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="4"  y1="32" x2="18" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="46" y1="32" x2="60" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="navbar-title">CONTROLE <strong>DE PNEUS</strong></span>
+    </div>
+    <div class="navbar-right">
+      <button class="theme-toggle" title="Alternar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <div class="user-avatar" id="userAvatar">?</div>
+    </div>
+  </header>
+
+  <!-- ── Conteúdo ───────────────────────────── -->
+  <main class="main-content">
+
+    <div class="page-header">
+      <div>
+        <p class="page-breadcrumb">Dashboard / Nova Obra</p>
+        <h1 class="page-title">Nova Obra</h1>
+      </div>
+    </div>
+
+    <form id="formNovaObra" novalidate>
+      <div class="form-layout">
+
+        <!-- ── Coluna principal ──────────────── -->
+        <div class="col-main">
+
+          <!-- Seção: Dados da obra -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="section-title">Dados da Obra</h2>
+                <p class="section-sub">Informações gerais da obra</p>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Nome da Obra *</label>
+              <input
+                type="text"
+                id="nomeObra"
+                class="field-input"
+                placeholder="Ex: Obra Rodovia SP-310 km 42"
+                maxlength="100"
+                required
+              />
+              <span class="field-error" id="nomeObraError"></span>
+            </div>
+          </div>
+
+          <!-- Seção: Caminhões -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="3" width="15" height="13" rx="2"/>
+                  <path d="M16 8h4l3 3v5h-7V8z"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="section-title">Caminhões</h2>
+                <p class="section-sub">Adicione os caminhões desta obra</p>
+              </div>
+              <button type="button" class="btn-add" id="btnAddCaminhao">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Adicionar
+              </button>
+            </div>
+
+            <div class="lista-caminhoes" id="listaCaminhoes">
+              <!-- itens inseridos via JS -->
+              <div class="empty-lista" id="emptyCaminhoes">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="1" y="3" width="15" height="13" rx="2"/>
+                  <path d="M16 8h4l3 3v5h-7V8z"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+                <p>Nenhum caminhão adicionado</p>
+              </div>
+            </div>
+            <span class="field-error" id="caminhoesError"></span>
+          </div>
+
+
+        </div>
+
+        <!-- ── Coluna lateral (resumo) ──────── -->
+        <div class="col-side">
+          <div class="summary-card" id="summaryCard">
+            <h3 class="summary-title">Resumo</h3>
+
+            <div class="summary-item">
+              <span class="summary-label">Nome</span>
+              <span class="summary-value" id="sumNome">—</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-item">
+              <span class="summary-label">Caminhões</span>
+              <span class="summary-value accent" id="sumCaminhoes">0</span>
+            </div>
+
+            <div class="summary-divider" style="margin: 20px 0 16px"></div>
+
+            <button type="submit" class="btn-criar" id="btnCriar">
+              <span class="btn-text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Criar Obra
+              </span>
+              <span class="btn-loader" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+                Criando obra...
+              </span>
+            </button>
+
+            <a href="dashboard.html" class="btn-cancelar">Cancelar</a>
+          </div>
+        </div>
+
+      </div>
+    </form>
+
+  </main>
+
+  <!-- ── Template caminhão ─────────────────── -->
+  <template id="tmplCaminhao">
+    <div class="item-caminhao" data-idx="">
+      <div class="item-num"></div>
+      <div class="item-fields">
+        <div class="field-group">
+          <label class="field-label">Nome do Caminhão *</label>
+          <input type="text" class="field-input campo-nome-caminhao" placeholder="Ex: Scania R450" maxlength="60" required />
+          <span class="field-error erro-nome-caminhao"></span>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Placa <span class="optional">(opcional)</span></label>
+          <input type="text" class="field-input campo-placa-caminhao" placeholder="Ex: ABC-1234" maxlength="10" />
+        </div>
+      </div>
+      <button type="button" class="btn-remover" title="Remover">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </button>
+    </div>
+  </template>
+
+
+
+  <!-- ── Toast ──────────────────────────────── -->
+  <div class="toast" id="toast" style="display:none">
+    <span class="toast-icon"></span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/nova-obra.js"></script>
+</body>
+</html>

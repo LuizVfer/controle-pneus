@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Controle de Pneus</title>
+  <script>
+    (function() {
+      const t = localStorage.getItem('cp-theme');
+      const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t || sys);
+    })();
+  </script>
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <header class="navbar">
+    <div class="navbar-brand">
+      <div class="navbar-icon">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="14" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="4" fill="currentColor"/>
+          <line x1="32" y1="4"  x2="32" y2="18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="46" x2="32" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="4"  y1="32" x2="18" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="46" y1="32" x2="60" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="navbar-title">CONTROLE <strong>DE PNEUS</strong></span>
+    </div>
+
+    <div class="navbar-right">
+      <!-- Toggle de tema -->
+      <button class="theme-toggle" title="Alternar tema" aria-label="Alternar tema claro/escuro">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>   <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>    <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+
+      <div class="navbar-user">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <span class="user-name" id="userName">Carregando...</span>
+          <span class="user-role" id="userRole">—</span>
+        </div>
+      </div>
+
+      <button class="btn-logout" id="btnLogout" title="Sair">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <h1 class="page-title">Obras em Aberto</h1>
+        <span class="obras-count" id="obrasCount">0 obras</span>
+      </div>
+      <div class="action-bar-right">
+        <a href="usuarios.html" class="btn-secondary admin-only" id="btnUsuarios" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Usuários
+        </a>
+        <a href="estoque.html" class="btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+          </svg>
+          Estoque
+        </a>
+        <a href="relatorios.html" class="btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Relatórios
+        </a>
+        <a href="nova-obra.html" class="btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nova Obra
+        </a>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar obra pelo nome..." />
+        <button class="search-clear" id="searchClear" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="filter-right">
+        <select id="filterData" class="select-filter">
+          <option value="recentes">Mais recentes</option>
+          <option value="antigas">Mais antigas</option>
+          <option value="az">Nome A → Z</option>
+          <option value="za">Nome Z → A</option>
+        </select>
+
+        <div class="filter-tabs">
+          <button class="tab-btn active" data-status="aberta">Abertas</button>
+          <button class="tab-btn" data-status="finalizada">Finalizadas</button>
+          <button class="tab-btn" data-status="arquivada">Arquivadas</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="obras-grid" id="obrasGrid">
+      <div class="state-loading" id="stateLoading">
+        <div class="spinner"></div>
+        <p>Carregando obras...</p>
+      </div>
+      <div class="state-empty" id="stateEmpty" style="display:none">
+        <div class="empty-icon">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="8" y="16" width="48" height="36" rx="4"/>
+            <path d="M8 24h48"/><path d="M24 8h16"/><path d="M32 8v8"/>
+            <path d="M24 36h16M32 32v8"/>
+          </svg>
+        </div>
+        <h3 id="emptyTitle">Nenhuma obra encontrada</h3>
+        <p id="emptyMsg">Clique em "Nova Obra" para começar.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <template id="cardTemplate">
+    <article class="obra-card" data-id="">
+      <div class="card-status-bar"></div>
+      <div class="card-body">
+        <div class="card-header">
+          <span class="card-badge"></span>
+          <span class="card-data"></span>
+        </div>
+        <h2 class="card-title"></h2>
+        <div class="card-stats">
+          <div class="stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13" rx="2"/>
+              <path d="M16 8h4l3 3v5h-7V8z"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            <span class="stat-value stat-caminhoes"></span>
+            <span class="stat-label">caminhões</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span class="stat-value stat-criador"></span>
+            <span class="stat-label">criado por</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-tempo"></span>
+        <span class="card-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </span>
+      </div>
+    </article>
+  </template>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/dashboard.js"></script>
+</body>
+</html>
