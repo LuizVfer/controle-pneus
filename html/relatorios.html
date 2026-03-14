@@ -20,13 +20,10 @@
 <body>
   <div class="bg-grid"></div>
 
-  <!-- ── Navbar ─────────────────────────────── -->
   <header class="navbar">
     <div class="navbar-brand">
       <a href="dashboard.html" class="back-btn" title="Voltar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       </a>
       <div class="navbar-icon">
         <svg viewBox="0 0 64 64" fill="none">
@@ -43,9 +40,7 @@
     </div>
     <div class="navbar-right">
       <button class="theme-toggle" title="Alternar tema">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="5"/>
           <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
@@ -60,7 +55,6 @@
 
   <main class="main-content">
 
-    <!-- ── Page header ────────────────────── -->
     <div class="page-header">
       <div>
         <p class="page-breadcrumb">Dashboard / Relatórios</p>
@@ -68,7 +62,7 @@
       </div>
     </div>
 
-    <!-- ── Seletor de obra ────────────────── -->
+    <!-- Seletor de obra -->
     <div class="selector-card" id="selectorCard">
       <div class="selector-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -107,13 +101,13 @@
       </div>
     </div>
 
-    <!-- ── Estado vazio inicial ───────────── -->
+    <!-- Estado vazio -->
     <div class="empty-state" id="emptyState">
       <div class="empty-illustration">
         <svg viewBox="0 0 120 120" fill="none">
           <circle cx="60" cy="60" r="52" stroke="var(--borda)" stroke-width="3"/>
           <circle cx="60" cy="60" r="28" stroke="var(--borda)" stroke-width="3"/>
-          <circle cx="60" cy="60" r="8" fill="var(--borda-light)"/>
+          <circle cx="60" cy="60" r="8" fill="var(--borda)"/>
           <line x1="60" y1="8"  x2="60" y2="32"  stroke="var(--borda)" stroke-width="3" stroke-linecap="round"/>
           <line x1="60" y1="88" x2="60" y2="112" stroke="var(--borda)" stroke-width="3" stroke-linecap="round"/>
           <line x1="8"  y1="60" x2="32" y2="60"  stroke="var(--borda)" stroke-width="3" stroke-linecap="round"/>
@@ -124,19 +118,19 @@
       <p>O relatório completo aparecerá aqui com todos os dados da obra selecionada.</p>
     </div>
 
-    <!-- ── Loading ────────────────────────── -->
+    <!-- Loading -->
     <div class="loading-state" id="loadingState" style="display:none">
       <div class="spinner-lg"></div>
       <p>Gerando relatório...</p>
     </div>
 
-    <!-- ── Relatório ──────────────────────── -->
+    <!-- Relatório -->
     <div class="relatorio" id="relatorio" style="display:none">
 
-      <!-- Barra de ações do relatório -->
+      <!-- Toolbar -->
       <div class="relatorio-toolbar">
         <div class="relatorio-toolbar-left">
-          <span class="relatorio-label">Relatório gerado em <span id="relGeradoEm">—</span></span>
+          <span class="relatorio-label">Gerado em <span id="relGeradoEm">—</span></span>
         </div>
         <button class="btn-imprimir" id="btnImprimir">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -148,7 +142,7 @@
         </button>
       </div>
 
-      <!-- Cabeçalho do relatório -->
+      <!-- Cabeçalho -->
       <div class="rel-header" id="relHeader">
         <div class="rel-header-top">
           <div>
@@ -168,12 +162,10 @@
             </svg>
           </div>
         </div>
-
-        <!-- KPIs -->
         <div class="rel-kpis" id="relKpis"></div>
       </div>
 
-      <!-- Seção: Caminhões e Pneus -->
+      <!-- Seção: Veículos -->
       <div class="rel-section">
         <div class="rel-section-header">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -181,18 +173,19 @@
             <path d="M16 8h4l3 3v5h-7V8z"/>
             <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
           </svg>
-          <h3>Caminhões e Pneus</h3>
+          <h3>Veículos</h3>
           <span class="rel-section-count" id="countCaminhoes">0</span>
         </div>
         <div class="rel-table-wrap">
-          <table class="rel-table" id="tabelaCaminhoes">
+          <table class="rel-table">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Caminhão</th>
+                <th>Tipo</th>
+                <th>Veículo</th>
                 <th>Placa</th>
-                <th>Pneus Atribuídos</th>
-                <th>Qtd.</th>
+                <th>Cobertura</th>
+                <th>Pneus atribuídos</th>
               </tr>
             </thead>
             <tbody id="bodyCaminhoes"></tbody>
@@ -212,7 +205,7 @@
         <div class="pneus-inventory" id="pneusInventory"></div>
       </div>
 
-      <!-- Seção: Histórico de Trocas -->
+      <!-- Seção: Histórico de Movimentações -->
       <div class="rel-section">
         <div class="rel-section-header">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -221,31 +214,71 @@
             <polyline points="7 23 3 19 7 15"/>
             <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
           </svg>
-          <h3>Histórico de Trocas</h3>
+          <h3>Histórico de Movimentações</h3>
           <span class="rel-section-count" id="countTrocas">0</span>
         </div>
-        <div id="trocasContent">
-          <div class="rel-table-wrap">
-            <table class="rel-table" id="tabelaTrocas">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Data</th>
-                  <th>Caminhão</th>
-                  <th>Pneu Saiu</th>
-                  <th>Pneu Entrou</th>
-                  <th>Operador</th>
-                </tr>
-              </thead>
-              <tbody id="bodyTrocas"></tbody>
-            </table>
+        <!-- Filtros do histórico -->
+        <div class="rel-hist-filtros-wrap">
+          <!-- Linha 1: tipo + contador -->
+          <div class="rel-hist-linha">
+            <div class="rel-hist-tipo-tabs">
+              <button class="hist-tipo-btn active" data-tipo="">Todas</button>
+              <button class="hist-tipo-btn" data-tipo="adicao">Adições</button>
+              <button class="hist-tipo-btn" data-tipo="remocao">Remoções</button>
+              <button class="hist-tipo-btn" data-tipo="troca">Trocas</button>
+            </div>
+            <span class="rel-hist-count" id="relHistCount"></span>
+          </div>
+          <!-- Linha 2: busca, veículo, período, usuário -->
+          <div class="rel-hist-linha wrap">
+            <div class="modal-busca-pneu rel-hist-busca">
+              <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="relHistBusca" class="busca-input" placeholder="Pneu ou veículo..." />
+            </div>
+            <!-- Dropdown customizado: Veículos -->
+            <div class="cp-select" id="cpSelectVeiculo">
+              <button class="cp-select-btn" type="button">
+                <span class="cp-select-label">Todos os veículos</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="cp-select-menu" style="display:none">
+                <div class="cp-select-search-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input class="cp-select-search" type="text" placeholder="Buscar..." />
+                </div>
+                <div class="cp-select-options" id="cpSelectVeiculoOpts"></div>
+              </div>
+            </div>
+            <div class="rel-hist-periodo">
+              <input type="date" id="relHistDtIni" class="rel-hist-date" title="Data início" />
+              <span class="rel-hist-ate">até</span>
+              <input type="date" id="relHistDtFim" class="rel-hist-date" title="Data fim" />
+            </div>
+            <!-- Dropdown customizado: Operadores -->
+            <div class="cp-select" id="cpSelectUsuario">
+              <button class="cp-select-btn" type="button">
+                <span class="cp-select-label">Todos os operadores</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="cp-select-menu" style="display:none">
+                <div class="cp-select-search-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input class="cp-select-search" type="text" placeholder="Buscar..." />
+                </div>
+                <div class="cp-select-options" id="cpSelectUsuarioOpts"></div>
+              </div>
+            </div>
+            <button class="rel-hist-limpar" id="relHistLimpar" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Limpar
+            </button>
           </div>
         </div>
+        <div class="rel-hist-cards" id="relHistCards"></div>
+        <button class="btn-mais-hist" id="btnMaisHist" style="display:none">Ver mais</button>
       </div>
 
     </div>
-    <!-- fim #relatorio -->
-
   </main>
 
   <script type="module" src="../js/theme.js"></script>

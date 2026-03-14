@@ -53,6 +53,7 @@
   display: flex; align-items: flex-end; justify-content: space-between;
   gap: 16px; margin-bottom: 28px;
   animation: fadeUp 0.35s ease both;
+  flex-wrap: wrap;
 }
 .page-breadcrumb {
   font-size: 12px; text-transform: uppercase;
@@ -62,6 +63,12 @@
   font-family: var(--font-display); font-size: 36px; font-weight: 800;
   text-transform: uppercase; letter-spacing: -0.5px; color: var(--texto);
 }
+
+/* ── Action bar right ────────────────────────── */
+.action-bar-right {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+
 .btn-add-estoque {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 10px 20px; border-radius: var(--radius-sm);
@@ -72,6 +79,80 @@
 }
 .btn-add-estoque svg { width: 16px; height: 16px; }
 .btn-add-estoque:hover { background: var(--accent-dark); box-shadow: 0 4px 16px var(--accent-glow); }
+
+/* ── Botão secundário genérico (usado pelo JS) ── */
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: var(--radius-sm);
+  background: var(--cinza-soft); color: var(--texto-sub);
+  border: 1px solid var(--borda);
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--transition);
+}
+.btn-secondary:hover {
+  background: var(--surface); color: var(--texto);
+  border-color: var(--borda-light);
+}
+.btn-secondary svg { width: 15px; height: 15px; }
+
+/* ── Status: em recapagem ───────────────────── */
+.pneu-card.em_recapagem::before  { background: var(--azul); }
+.pneu-card.em_recapagem .pneu-icone { background: var(--azul-soft); color: var(--azul); }
+.pneu-card.em_recapagem .status-badge { background: var(--azul-soft); color: var(--azul); }
+
+/* ── Badge recapado ─────────────────────────── */
+.badge-recapado {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 3px 8px; border-radius: 100px;
+  background: var(--azul-soft); color: var(--azul);
+  border: 1px solid rgba(59,158,255,0.25);
+  white-space: nowrap;
+}
+.badge-recapado svg { width: 10px; height: 10px; flex-shrink: 0; }
+
+/* ── Botões de recapagem no card ────────────── */
+.btn-pneu-action.recapar {
+  background: var(--azul-soft);
+  color: var(--azul);
+  border-color: rgba(59,158,255,0.3);
+}
+.btn-pneu-action.recapar:hover {
+  background: var(--azul);
+  color: #fff;
+  border-color: var(--azul);
+}
+.btn-pneu-action.recebido {
+  background: var(--verde-soft);
+  color: var(--verde);
+  border-color: rgba(39,174,96,0.3);
+}
+.btn-pneu-action.recebido:hover {
+  background: var(--verde);
+  color: #fff;
+  border-color: var(--verde);
+}
+
+/* ── Modal icon azul ────────────────────────── */
+.modal-header-icon.azul { background: var(--azul-soft); color: var(--azul); }
+
+/* ── Hint recapagem ─────────────────────────── */
+.modal-recapagem-hint {
+  font-size: 12px; color: var(--azul);
+  background: var(--azul-soft); border: 1px solid rgba(59,158,255,0.2);
+  border-radius: var(--radius-sm); padding: 8px 12px; margin-top: 4px;
+}
+
+/* ── Botão azul ─────────────────────────────── */
+.btn-azul-sm {
+  height: 36px; padding: 0 18px; border-radius: var(--radius-sm);
+  background: var(--azul); border: none; color: #fff;
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  text-transform: uppercase; cursor: pointer; transition: all var(--transition);
+}
+.btn-azul-sm:hover { filter: brightness(1.1); }
+.btn-azul-sm:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── KPIs ───────────────────────────────────── */
 .kpi-row {
@@ -88,6 +169,7 @@
 }
 .kpi-card.verde  { border-left-color: var(--verde); }
 .kpi-card.accent { border-left-color: var(--accent); }
+.kpi-card.azul   { border-left-color: var(--azul); }
 .kpi-card.danger { border-left-color: var(--erro); }
 .kpi-label {
   font-size: 11px; font-weight: 700;
@@ -99,6 +181,7 @@
 }
 .kpi-card.verde  .kpi-value { color: var(--verde); }
 .kpi-card.accent .kpi-value { color: var(--accent); }
+.kpi-card.azul   .kpi-value { color: var(--azul); }
 .kpi-card.danger .kpi-value { color: var(--erro); }
 
 /* ── Filter bar ─────────────────────────────── */
@@ -200,16 +283,18 @@
 }
 
 .pneu-card-actions {
-  display: flex; gap: 6px; margin-top: 2px;
+  display: flex; gap: 5px; margin-top: 2px;
+  flex-wrap: wrap;
 }
 .btn-pneu-action {
-  flex: 1; padding: 7px 8px; border-radius: var(--radius-sm);
-  font-family: var(--font-body); font-size: 12px; font-weight: 600;
+  flex: 1 1 auto; min-width: 0;
+  padding: 6px 6px; border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
   cursor: pointer; border: 1px solid var(--borda);
-  display: flex; align-items: center; justify-content: center; gap: 5px;
-  transition: all var(--transition);
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  transition: all var(--transition); white-space: nowrap;
 }
-.btn-pneu-action svg { width: 12px; height: 12px; }
+.btn-pneu-action svg { width: 11px; height: 11px; flex-shrink: 0; }
 .btn-pneu-action.inutilizar {
   background: var(--cinza-soft); color: var(--texto-muted);
 }
@@ -428,17 +513,191 @@
 @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
 @keyframes slideUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
 
+/* ── Barra flutuante de seleção ─────────────── */
+/* Estilos base (complementa os inline styles do JS) */
+#barraSelecao {
+  /* garante que a barra respeite padding lateral em telas pequenas */
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+
+/* Quando o pneu-card está em modo seleção, desativa hover de elevação */
+.pneu-card.modo-selecao:hover {
+  transform: none;
+}
+.pneu-card.selecionado {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent-soft), var(--sombra-card) !important;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .kpi-row { grid-template-columns: 1fr 1fr; }
 }
+
+@media (max-width: 600px) {
+  #barraSelecao {
+    flex-wrap: wrap;
+    justify-content: center;
+    bottom: 16px;
+    gap: 10px !important;
+    padding: 14px 16px !important;
+  }
+  #barraCount { width: 100%; text-align: center; }
+  #barraSelecionarTodos,
+  #barraTransferir,
+  #barraCancelar { flex: 1; justify-content: center; }
+  #barraTransferir { order: -1; width: 100%; }
+}
+
 @media (max-width: 500px) {
   .navbar { padding: 0 16px; }
-  .main-content { padding: 20px 16px 60px; }
+  .main-content { padding: 20px 16px 80px; }
   .page-header { flex-direction: column; align-items: flex-start; }
+  .action-bar-right { width: 100%; }
   .btn-add-estoque { width: 100%; justify-content: center; }
+  .btn-secondary#btnSelecionar { width: 100%; justify-content: center; }
   .filter-bar { flex-direction: column; align-items: stretch; }
   .search-wrap { width: 100%; }
   .motivo-grid { grid-template-columns: 1fr 1fr; }
   .kpi-row { grid-template-columns: 1fr 1fr; }
+  .pneus-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+/* ── Tabs de estoques por cidade ─────────────── */
+.estoques-tabs-wrap {
+  overflow-x: auto;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.estoques-tabs {
+  display: flex;
+  gap: 6px;
+  width: max-content;
+  min-width: 100%;
+}
+.estoque-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--card);
+  border: 1.5px solid var(--borda);
+  border-radius: 20px;
+  color: var(--texto-muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  position: relative;
+}
+.estoque-tab-btn:hover { border-color: var(--accent); color: var(--texto); }
+.estoque-tab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  font-weight: 700;
+}
+.estoque-tab-count {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.12);
+  border-radius: 10px;
+  padding: 1px 7px;
+}
+.estoque-tab-btn.active .estoque-tab-count { background: rgba(0,0,0,0.2); }
+.estoque-tab-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  opacity: 0.5;
+  transition: opacity 0.15s, background 0.15s;
+  cursor: pointer;
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+.estoque-tab-del:hover { opacity: 1; background: rgba(0,0,0,0.15); }
+.estoque-tab-novo {
+  border-style: dashed;
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.estoque-tab-novo:hover { background: var(--accent); color: #000; }
+
+/* ── Chip de estoque no card do pneu ─────────── */
+.pneu-estoque-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-bottom: 4px;
+}
+
+/* ── Lista de estoques no modal transferir ───── */
+.estoque-select-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.estoque-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1.5px solid var(--borda);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.estoque-select-item:hover   { border-color: var(--accent); background: var(--accent-soft); }
+.estoque-select-item.selected { border-color: var(--accent); background: var(--accent-soft); }
+.estoque-item-info { display: flex; flex-direction: column; gap: 2px; }
+.estoque-item-nome { font-size: 14px; font-weight: 600; color: var(--texto); }
+.estoque-item-qtd  { font-size: 12px; color: var(--texto-muted); }
+
+/* ── Botões do modal ─────────────────────────── */
+.btn-salvar {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px;
+  background: var(--accent); color: #000;
+  border: none; border-radius: 9px;
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-salvar:hover:not(:disabled) { filter: brightness(1.1); }
+.btn-salvar:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px;
+  background: var(--erro); color: #fff;
+  border: none; border-radius: 9px;
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s;
+}
+.btn-danger:hover:not(:disabled) { background: #c82333; }
+.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Botão transferir no card */
+.btn-pneu-action.transferir {
+  background: rgba(100,140,255,0.08);
+  color: #648cff;
+  border-color: rgba(100,140,255,0.25);
+}
+.btn-pneu-action.transferir:hover {
+  background: rgba(100,140,255,0.18);
+  border-color: #648cff;
 }

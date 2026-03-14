@@ -199,6 +199,21 @@ export async function atualizarObra(obraId, dadosNovos, dadosAntigos, usuarioId,
 }
 
 /** Finaliza uma obra */
+
+// Helper interno: remove obraId de todos os veículos vinculados
+async function _removerObraAtivaDosVeiculos(obraId) {
+  const camsSnap = await getDocs(collection(db, "obras", obraId, "caminhoes"));
+  const frotaIds = [...new Set(
+    camsSnap.docs.map(d => d.data().frota_veiculo_id).filter(Boolean)
+  )];
+  await Promise.all(frotaIds.map(async veiculoId => {
+    const vSnap = await getDoc(doc(db, "veiculos", veiculoId));
+    if (!vSnap.exists()) return;
+    const atual = (vSnap.data().obras_ativas || []).filter(o => o.id !== obraId);
+    await updateDoc(doc(db, "veiculos", veiculoId), { obras_ativas: atual });
+  }));
+}
+
 export async function finalizarObra(obraId) {
   // Libera todos os pneus em uso nesta obra de volta ao estoque
   const pneusQ = query(collection(db, "pneus"), where("obra_id_atual", "==", obraId));
@@ -218,6 +233,8 @@ export async function finalizarObra(obraId) {
     status: "finalizada",
     data_finalizacao: serverTimestamp(),
   });
+
+  await _removerObraAtivaDosVeiculos(obraId);
 }
 
 /** Arquiva (soft delete) uma obra */
@@ -240,6 +257,8 @@ export async function arquivarObra(obraId) {
     status: "arquivada",
     data_arquivamento: serverTimestamp(),
   });
+
+  await _removerObraAtivaDosVeiculos(obraId);
 }
 
 // ─────────────────────────────────────────────
@@ -250,9 +269,19 @@ export async function arquivarObra(obraId) {
 export async function adicionarCaminhao(obraId, dados) {
   const ref = await addDoc(collection(db, "obras", obraId, "caminhoes"), {
     ...dados,
-    pneus_ids: [],   // array de IDs — suporta múltiplos pneus por caminhão
+    pneus_ids: [],
     criado_em: serverTimestamp(),
   });
+
+  // Se veio da frota, registra a obra no veículo
+  if (dados.frota_veiculo_id) {
+    const obraSnap = await getDoc(doc(db, "obras", obraId));
+    const obraNome = obraSnap.exists() ? obraSnap.data().nome : "";
+    await updateDoc(doc(db, "veiculos", dados.frota_veiculo_id), {
+      obras_ativas: arrayUnion({ id: obraId, nome: obraNome }),
+    }).catch(() => {});
+  }
+
   return ref.id;
 }
 
@@ -269,7 +298,23 @@ export async function atualizarCaminhao(obraId, caminhaoId, dados) {
 
 /** Remove um caminhão */
 export async function deletarCaminhao(obraId, caminhaoId) {
-  await deleteDoc(doc(db, "obras", obraId, "caminhoes", caminhaoId));
+  const camRef  = doc(db, "obras", obraId, "caminhoes", caminhaoId);
+  const camSnap = await getDoc(camRef);
+  if (camSnap.exists()) {
+    const cam = camSnap.data();
+
+    // Remove obra_ativa do veículo da frota — pneus NÃO são tocados,
+    // pois continuam em uso no veículo mesmo fora desta obra
+    if (cam.frota_veiculo_id) {
+      const vRef  = doc(db, "veiculos", cam.frota_veiculo_id);
+      const vSnap = await getDoc(vRef);
+      if (vSnap.exists()) {
+        const obrasAtivas = (vSnap.data().obras_ativas || []).filter(o => o.id !== obraId);
+        await updateDoc(vRef, { obras_ativas: obrasAtivas });
+      }
+    }
+  }
+  await deleteDoc(camRef);
 }
 
 // ─────────────────────────────────────────────
@@ -323,7 +368,7 @@ export async function adicionarPneuAoCaminhao(obraId, caminhaoId, pneuId, pneuNu
   const caminhaoSnap = await getDoc(caminhaoRef);
   const caminhao     = caminhaoSnap.data();
 
-  // Registra no histórico
+  // Registra no histórico da obra
   await addDoc(collection(db, "obras", obraId, "trocas"), {
     caminhao_id:        caminhaoId,
     caminhao_nome:      caminhao.nome,
@@ -350,6 +395,22 @@ export async function adicionarPneuAoCaminhao(obraId, caminhaoId, pneuId, pneuNu
     caminhao_id:   caminhaoId,
     caminhao_nome: caminhao.nome,
   });
+
+  // ── Sync frota: se o caminhão veio da frota, espelha a operação ──
+  if (caminhao.frota_veiculo_id) {
+    const frotaRef = doc(db, "veiculos", caminhao.frota_veiculo_id);
+    const frotaSnap = await getDoc(frotaRef);
+    if (frotaSnap.exists()) {
+      await updateDoc(frotaRef, { pneus_ids: arrayUnion(pneuId) });
+      await addDoc(collection(db, "veiculos", caminhao.frota_veiculo_id, "movimentacoes"), {
+        veiculo_id: caminhao.frota_veiculo_id, veiculo_nome: frotaSnap.data().nome,
+        pneu_saiu: null, pneu_saiu_numero: null,
+        pneu_entrou: pneuId, pneu_entrou_numero: pneuNumero,
+        data: serverTimestamp(), usuario_id: usuarioId, usuario_nome: usuarioNome,
+        origem: "obra", obra_nome: obraNome,
+      });
+    }
+  }
 }
 
 /**
@@ -361,7 +422,7 @@ export async function removerPneuDoCaminhao(obraId, caminhaoId, pneuId, pneuNume
   const caminhaoSnap = await getDoc(caminhaoRef);
   const caminhao     = caminhaoSnap.data();
 
-  // Registra no histórico
+  // Registra no histórico da obra
   await addDoc(collection(db, "obras", obraId, "trocas"), {
     caminhao_id:        caminhaoId,
     caminhao_nome:      caminhao.nome,
@@ -383,6 +444,104 @@ export async function removerPneuDoCaminhao(obraId, caminhaoId, pneuId, pneuNume
     caminhao_id: null,
     // obra_id_atual permanece — pneu ainda pertence à obra
   });
+
+  // ── Sync frota ──
+  if (caminhao.frota_veiculo_id) {
+    const frotaRef = doc(db, "veiculos", caminhao.frota_veiculo_id);
+    const frotaSnap = await getDoc(frotaRef);
+    if (frotaSnap.exists()) {
+      // Remove de pneus_ids E limpa posicoes da frota
+      const frotaPosClear = (frotaSnap.data().posicoes || []).map(p =>
+        p.pneu_id === pneuId ? { ...p, pneu_id: null, pneu_numero: null } : p
+      );
+      await updateDoc(frotaRef, {
+        pneus_ids: arrayRemove(pneuId),
+        posicoes:  frotaPosClear,
+      });
+      const obraSnap = await getDoc(doc(db, "obras", obraId));
+      const obraNome = obraSnap.exists() ? obraSnap.data().nome : "";
+      await addDoc(collection(db, "veiculos", caminhao.frota_veiculo_id, "movimentacoes"), {
+        veiculo_id: caminhao.frota_veiculo_id, veiculo_nome: frotaSnap.data().nome,
+        pneu_saiu: pneuId, pneu_saiu_numero: pneuNumero,
+        pneu_entrou: null, pneu_entrou_numero: null,
+        data: serverTimestamp(), usuario_id: usuarioId, usuario_nome: usuarioNome,
+        origem: "obra", obra_nome: obraNome,
+      });
+    }
+  }
+}
+
+/**
+ * Troca um pneu por outro na mesma posição do caminhão.
+ * Grava UM ÚNICO registro no histórico com pneu_saiu + pneu_entrou.
+ */
+export async function trocarPneuNoCaminhao(
+  obraId, caminhaoId,
+  pneuSaiuId, pneuSaiuNumero,
+  pneuEntrouId, pneuEntrouNumero,
+  usuarioId, usuarioNome
+) {
+  const caminhaoRef  = doc(db, "obras", obraId, "caminhoes", caminhaoId);
+  const caminhaoSnap = await getDoc(caminhaoRef);
+  const caminhao     = caminhaoSnap.data();
+
+  const obraSnap = await getDoc(doc(db, "obras", obraId));
+  const obraNome = obraSnap.exists() ? obraSnap.data().nome : "";
+
+  // 1. Registro ÚNICO de troca no histórico
+  await addDoc(collection(db, "obras", obraId, "trocas"), {
+    caminhao_id:        caminhaoId,
+    caminhao_nome:      caminhao.nome,
+    pneu_saiu:          pneuSaiuId,
+    pneu_saiu_numero:   pneuSaiuNumero,
+    pneu_entrou:        pneuEntrouId,
+    pneu_entrou_numero: pneuEntrouNumero,
+    data:               serverTimestamp(),
+    usuario_id:         usuarioId,
+    usuario_nome:       usuarioNome,
+  });
+
+  // 2. Atualiza array do caminhão
+  await updateDoc(caminhaoRef, {
+    pneus_ids: arrayRemove(pneuSaiuId),
+  });
+  await updateDoc(caminhaoRef, {
+    pneus_ids: arrayUnion(pneuEntrouId),
+  });
+
+  // 3. Libera pneu que saiu
+  await updateDoc(doc(db, "pneus", pneuSaiuId), {
+    status:        "disponivel",
+    caminhao_id:   null,
+    caminhao_nome: null,
+    // obra_id_atual permanece — pneu ainda pertence à obra
+  });
+
+  // 4. Marca pneu que entrou como em uso
+  await updateDoc(doc(db, "pneus", pneuEntrouId), {
+    status:        "em_uso",
+    obra_id_atual: obraId,
+    obra_nome:     obraNome,
+    caminhao_id:   caminhaoId,
+    caminhao_nome: caminhao.nome,
+  });
+
+  // ── Sync frota ──
+  if (caminhao.frota_veiculo_id) {
+    const frotaRef = doc(db, "veiculos", caminhao.frota_veiculo_id);
+    const frotaSnap = await getDoc(frotaRef);
+    if (frotaSnap.exists()) {
+      await updateDoc(frotaRef, { pneus_ids: arrayRemove(pneuSaiuId) });
+      await updateDoc(frotaRef, { pneus_ids: arrayUnion(pneuEntrouId) });
+      await addDoc(collection(db, "veiculos", caminhao.frota_veiculo_id, "movimentacoes"), {
+        veiculo_id: caminhao.frota_veiculo_id, veiculo_nome: frotaSnap.data().nome,
+        pneu_saiu: pneuSaiuId, pneu_saiu_numero: pneuSaiuNumero,
+        pneu_entrou: pneuEntrouId, pneu_entrou_numero: pneuEntrouNumero,
+        data: serverTimestamp(), usuario_id: usuarioId, usuario_nome: usuarioNome,
+        origem: "obra", obra_nome: obraNome,
+      });
+    }
+  }
 }
 
 /** Mantido para compatibilidade com código legado (redireciona para adicionarPneuAoCaminhao) */
@@ -405,10 +564,11 @@ async function _proximoNumeroPneu() {
     t.set(contRef, { ultimo: novo }, { merge: true });
     return novo;
   });
-  return `PNE-${String(novoNum).padStart(4, "0")}`;
+  const ano = String(new Date().getFullYear()).slice(-2);
+  return `ALS ${ano}-${String(novoNum).padStart(4, "0")}`;
 }
 
-export async function adicionarPneuEstoque() {
+export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null) {
   const numero = await _proximoNumeroPneu();
   const ref = await addDoc(collection(db, "pneus"), {
     numero_identificacao:  numero,
@@ -417,17 +577,58 @@ export async function adicionarPneuEstoque() {
     caminhao_id:           null,
     motivo_inutilizacao:   null,
     data_inutilizacao:     null,
+    estoque_id:            estoqueId,
+    estoque_nome:          estoqueNome,
     criado_em:             serverTimestamp(),
   });
   return { id: ref.id, numero_identificacao: numero };
 }
 
-export async function adicionarPneusEmLote(quantidade) {
+export async function adicionarPneusEmLote(quantidade, estoqueId = null, estoqueNome = null) {
   const resultados = [];
   for (let i = 0; i < quantidade; i++) {
-    resultados.push(await adicionarPneuEstoque());
+    resultados.push(await adicionarPneuEstoque(estoqueId, estoqueNome));
   }
   return resultados;
+}
+
+
+// ─────────────────────────────────────────────
+//  ESTOQUES POR CIDADE
+// ─────────────────────────────────────────────
+
+/** Lista todos os estoques */
+export async function listarEstoques() {
+  const snap = await getDocs(query(collection(db, "estoques"), orderBy("nome", "asc")));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+/** Cria um novo estoque de cidade */
+export async function criarEstoque(nome, usuarioId, usuarioNome) {
+  const ref = await addDoc(collection(db, "estoques"), {
+    nome,
+    criado_em:       serverTimestamp(),
+    criado_por:      usuarioId,
+    criado_por_nome: usuarioNome,
+  });
+  return ref.id;
+}
+
+/** Deleta um estoque (só se não tiver pneus) */
+export async function deletarEstoque(estoqueId) {
+  const snap = await getDocs(
+    query(collection(db, "pneus"), where("estoque_id", "==", estoqueId))
+  );
+  if (!snap.empty) throw new Error("Estoque possui pneus — remova-os antes de deletar.");
+  await deleteDoc(doc(db, "estoques", estoqueId));
+}
+
+/** Transfere um pneu de um estoque para outro */
+export async function transferirPneuEstoque(pneuId, novoEstoqueId, novoEstoqueNome) {
+  await updateDoc(doc(db, "pneus", pneuId), {
+    estoque_id:   novoEstoqueId,
+    estoque_nome: novoEstoqueNome,
+  });
 }
 
 export async function listarEstoque() {
@@ -446,29 +647,137 @@ export async function inutilizarPneu(pneuId, motivo, usuarioId, usuarioNome) {
   const pneuSnap = await getDoc(pneuRef);
   const pneu     = pneuSnap.data();
 
-  if (pneu.status === "em_uso" && pneu.caminhao_id && pneu.obra_id_atual) {
-    const camRef = doc(db, "obras", pneu.obra_id_atual, "caminhoes", pneu.caminhao_id);
-    await updateDoc(camRef, { pneus_ids: arrayRemove(pneuId) });
-    await addDoc(collection(db, "obras", pneu.obra_id_atual, "trocas"), {
-      caminhao_id:        pneu.caminhao_id,
-      caminhao_nome:      "",
-      pneu_saiu:          pneuId,
-      pneu_saiu_numero:   pneu.numero_identificacao,
-      pneu_entrou:        null,
-      pneu_entrou_numero: null,
-      motivo_saida:       `Inutilizado: ${motivo}`,
-      data:               serverTimestamp(),
-      usuario_id:         usuarioId,
-      usuario_nome:       usuarioNome,
-    });
+  if (pneu.status === "em_uso" && pneu.caminhao_id) {
+
+    if (pneu.obra_id_atual) {
+      // ── Caso 1: pneu está num caminhão de OBRA ────────────────────
+      const camRef   = doc(db, "obras", pneu.obra_id_atual, "caminhoes", pneu.caminhao_id);
+      const camSnap  = await getDoc(camRef);
+      const caminhao = camSnap.data();
+
+      // Remove de pneus_ids e limpa posicoes[]
+      await updateDoc(camRef, { pneus_ids: arrayRemove(pneuId) });
+      const posicoesClear = (caminhao.posicoes || []).map(p =>
+        p.pneu_id === pneuId ? { ...p, pneu_id: null, pneu_numero: null } : p
+      );
+      await updateDoc(camRef, { posicoes: posicoesClear });
+
+      // Registra no histórico da obra
+      await addDoc(collection(db, "obras", pneu.obra_id_atual, "trocas"), {
+        caminhao_id:        pneu.caminhao_id,
+        caminhao_nome:      caminhao.nome || "",
+        pneu_saiu:          pneuId,
+        pneu_saiu_numero:   pneu.numero_identificacao,
+        pneu_entrou:        null,
+        pneu_entrou_numero: null,
+        motivo_saida:       `Inutilizado: ${motivo}`,
+        data:               serverTimestamp(),
+        usuario_id:         usuarioId,
+        usuario_nome:       usuarioNome,
+      });
+
+      // Sync frota (se o caminhão da obra veio da frota)
+      if (caminhao.frota_veiculo_id) {
+        const frotaRef  = doc(db, "veiculos", caminhao.frota_veiculo_id);
+        const frotaSnap = await getDoc(frotaRef);
+        if (frotaSnap.exists()) {
+          const frotaPosClear = (frotaSnap.data().posicoes || []).map(p =>
+            p.pneu_id === pneuId ? { ...p, pneu_id: null, pneu_numero: null } : p
+          );
+          await updateDoc(frotaRef, {
+            pneus_ids: arrayRemove(pneuId),
+            posicoes:  frotaPosClear,
+          });
+          const obraSnap = await getDoc(doc(db, "obras", pneu.obra_id_atual));
+          const obraNome = obraSnap.exists() ? obraSnap.data().nome : "";
+          await addDoc(collection(db, "veiculos", caminhao.frota_veiculo_id, "movimentacoes"), {
+            veiculo_id:         caminhao.frota_veiculo_id,
+            veiculo_nome:       frotaSnap.data().nome,
+            pneu_saiu:          pneuId,
+            pneu_saiu_numero:   pneu.numero_identificacao,
+            pneu_entrou:        null,
+            pneu_entrou_numero: null,
+            data:               serverTimestamp(),
+            usuario_id:         usuarioId,
+            usuario_nome:       usuarioNome,
+            origem:             "inutilizacao",
+            obra_nome:          obraNome,
+          });
+        }
+      }
+
+    } else {
+      // ── Caso 2: pneu está num veículo da FROTA (obra_id_atual = null) ──
+      const frotaRef  = doc(db, "veiculos", pneu.caminhao_id);
+      const frotaSnap = await getDoc(frotaRef);
+      if (frotaSnap.exists()) {
+        const frotaPosClear = (frotaSnap.data().posicoes || []).map(p =>
+          p.pneu_id === pneuId ? { ...p, pneu_id: null, pneu_numero: null } : p
+        );
+        await updateDoc(frotaRef, {
+          pneus_ids: arrayRemove(pneuId),
+          posicoes:  frotaPosClear,
+        });
+        await addDoc(collection(db, "veiculos", pneu.caminhao_id, "movimentacoes"), {
+          veiculo_id:         pneu.caminhao_id,
+          veiculo_nome:       frotaSnap.data().nome,
+          pneu_saiu:          pneuId,
+          pneu_saiu_numero:   pneu.numero_identificacao,
+          pneu_entrou:        null,
+          pneu_entrou_numero: null,
+          motivo_saida:       `Inutilizado: ${motivo}`,
+          data:               serverTimestamp(),
+          usuario_id:         usuarioId,
+          usuario_nome:       usuarioNome,
+          origem:             "inutilizacao",
+        });
+      }
+
+      // Propaga para os caminhões de obras abertas vinculadas a esta frota
+      const obrasSnap = await getDocs(
+        query(collection(db, "obras"), where("status", "==", "aberta"))
+      );
+      for (const obraDoc of obrasSnap.docs) {
+        const camsSnap = await getDocs(
+          query(
+            collection(db, "obras", obraDoc.id, "caminhoes"),
+            where("frota_veiculo_id", "==", pneu.caminhao_id)
+          )
+        );
+        for (const camDoc of camsSnap.docs) {
+          const camPosClear = (camDoc.data().posicoes || []).map(p =>
+            p.pneu_id === pneuId ? { ...p, pneu_id: null, pneu_numero: null } : p
+          );
+          await updateDoc(camDoc.ref, {
+            pneus_ids: arrayRemove(pneuId),
+            posicoes:  camPosClear,
+          });
+          // Registra no histórico da obra
+          await addDoc(collection(db, "obras", obraDoc.id, "trocas"), {
+            caminhao_id:        camDoc.id,
+            caminhao_nome:      camDoc.data().nome || "",
+            pneu_saiu:          pneuId,
+            pneu_saiu_numero:   pneu.numero_identificacao,
+            pneu_entrou:        null,
+            pneu_entrou_numero: null,
+            motivo_saida:       `Inutilizado: ${motivo}`,
+            data:               serverTimestamp(),
+            usuario_id:         usuarioId,
+            usuario_nome:       usuarioNome,
+          });
+        }
+      }
+    }
   }
 
+  // Atualiza o status do pneu
   await updateDoc(pneuRef, {
     status:              "inutilizavel",
     motivo_inutilizacao: motivo,
     data_inutilizacao:   serverTimestamp(),
     obra_id_atual:       null,
     caminhao_id:         null,
+    caminhao_nome:       null,
   });
 }
 
@@ -477,6 +786,31 @@ export async function reativarPneu(pneuId) {
     status:              "disponivel",
     motivo_inutilizacao: null,
     data_inutilizacao:   null,
+  });
+}
+
+/** Envia um pneu para recapagem (disponivel ou inutilizavel → em_recapagem) */
+export async function enviarParaRecapagem(pneuId) {
+  await updateDoc(doc(db, "pneus", pneuId), {
+    status:               "em_recapagem",
+    data_envio_recapagem: serverTimestamp(),
+    // limpa campos de inutilização caso venha desse status
+    motivo_inutilizacao:  null,
+    data_inutilizacao:    null,
+  });
+}
+
+/** Marca que o pneu voltou da recapagem (em_recapagem → disponivel) */
+export async function receberDeRecapagem(pneuId) {
+  const pneuRef  = doc(db, "pneus", pneuId);
+  const pneuSnap = await getDoc(pneuRef);
+  const pneu     = pneuSnap.data();
+  await updateDoc(pneuRef, {
+    status:                "disponivel",
+    recapado:              true,
+    qtd_recapagens:        (pneu.qtd_recapagens || 0) + 1,
+    data_ultima_recapagem: serverTimestamp(),
+    data_envio_recapagem:  null,
   });
 }
 
@@ -556,6 +890,251 @@ export async function gerarRelatorio(obraId) {
     totalPneus: pneus.length,
     totalTrocas: trocas.length,
   };
+}
+
+// ─────────────────────────────────────────────
+//  FROTA — Veículos da empresa  /veiculos/{id}
+// ─────────────────────────────────────────────
+
+/**
+ * Sincroniza pneus_ids e posicoes de um caminhão de obra com o veículo da frota.
+ * Chamada ao abrir obra.html para garantir que pneus adicionados via frota apareçam.
+ */
+export async function sincronizarCaminhaoComFrota(obraId, caminhaoId) {
+  const camRef  = doc(db, "obras", obraId, "caminhoes", caminhaoId);
+  const camSnap = await getDoc(camRef);
+  if (!camSnap.exists()) return;
+  const cam = camSnap.data();
+  if (!cam.frota_veiculo_id) return;
+
+  const frotaRef  = doc(db, "veiculos", cam.frota_veiculo_id);
+  const frotaSnap = await getDoc(frotaRef);
+  if (!frotaSnap.exists()) return;
+  const frota = frotaSnap.data();
+
+  // Busca status de todos os pneus do union para filtrar inválidos
+  const camPneus   = new Set(cam.pneus_ids   || []);
+  const frotaPneus = new Set(frota.pneus_ids || []);
+  const todosIds   = [...new Set([...camPneus, ...frotaPneus])];
+
+  // Filtra pneus que não podem estar em uso (inutilizavel, em_recapagem)
+  const statusValidos = new Set();
+  await Promise.all(todosIds.map(async (id) => {
+    const pSnap = await getDoc(doc(db, "pneus", id));
+    if (pSnap.exists()) {
+      const status = pSnap.data().status;
+      if (status !== "inutilizavel" && status !== "em_recapagem") {
+        statusValidos.add(id);
+      }
+    }
+  }));
+
+  const unidos = [...statusValidos];
+
+  // Mescla posicoes: frota é a fonte de verdade, mas só para pneus válidos
+  const camPosicoes   = cam.posicoes   || [];
+  const frotaPosicoes = frota.posicoes || [];
+  const posicoesMerge = camPosicoes.map(cp => {
+    const fp = frotaPosicoes.find(p => p.id === cp.id);
+    if (!fp) return cp;
+    // Limpa posição se o pneu não é mais válido
+    if (fp.pneu_id && !statusValidos.has(fp.pneu_id)) {
+      return { ...cp, pneu_id: null, pneu_numero: null };
+    }
+    // Se a frota tem pneu válido na posição e o caminhão não, copia da frota
+    if (fp.pneu_id && !cp.pneu_id) return { ...cp, pneu_id: fp.pneu_id, pneu_numero: fp.pneu_numero };
+    // Se o caminhão tem pneu e a frota não, mantém o caminhão
+    return cp;
+  });
+
+  await updateDoc(camRef,   { pneus_ids: unidos, posicoes: posicoesMerge });
+  await updateDoc(frotaRef, { pneus_ids: unidos, posicoes: posicoesMerge });
+
+  // Garante que pneus que vieram da frota (obra_id_atual=null) tenham status em_uso
+  const pneusNovos = [...frotaPneus].filter(id => !camPneus.has(id) && statusValidos.has(id));
+  for (const pneuId of pneusNovos) {
+    const pSnap = await getDoc(doc(db, "pneus", pneuId));
+    if (pSnap.exists() && pSnap.data().status === "disponivel") {
+      const obraSnap = await getDoc(doc(db, "obras", obraId));
+      const obraNome = obraSnap.exists() ? obraSnap.data().nome : "";
+      await updateDoc(doc(db, "pneus", pneuId), {
+        status:        "em_uso",
+        caminhao_id:   caminhaoId,
+        caminhao_nome: cam.nome,
+        obra_id_atual: obraId,
+        obra_nome:     obraNome,
+      });
+    }
+  }
+}
+
+export async function criarVeiculoFrota(dados) {
+  const ref = await addDoc(collection(db, "veiculos"), {
+    ...dados, criado_em: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+export async function listarVeiculosFrota() {
+  const snap = await getDocs(
+    query(collection(db, "veiculos"), orderBy("criado_em", "desc"))
+  );
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function getVeiculoFrota(veiculoId) {
+  const snap = await getDoc(doc(db, "veiculos", veiculoId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function atualizarVeiculoFrota(veiculoId, dados) {
+  await updateDoc(doc(db, "veiculos", veiculoId), dados);
+}
+
+export async function deletarVeiculoFrota(veiculoId) {
+  const vSnap = await getDoc(doc(db, "veiculos", veiculoId));
+  if (vSnap.exists()) {
+    // Libera todos os pneus do veículo
+    for (const pneuId of (vSnap.data().pneus_ids || [])) {
+      await updateDoc(doc(db, "pneus", pneuId), {
+        status: "disponivel", caminhao_id: null, caminhao_nome: null,
+        obra_id_atual: null, obra_nome: null,
+      });
+    }
+    // Limpa posicoes nos caminhoes de obras abertas vinculados
+    const obrasSnap = await getDocs(query(collection(db, "obras"), where("status", "==", "aberta")));
+    for (const obraDoc of obrasSnap.docs) {
+      const camsSnap = await getDocs(
+        query(collection(db, "obras", obraDoc.id, "caminhoes"),
+              where("frota_veiculo_id", "==", veiculoId))
+      );
+      for (const camDoc of camsSnap.docs) {
+        const camPosLimpas = (camDoc.data().posicoes || []).map(p =>
+          ({ ...p, pneu_id: null, pneu_numero: null })
+        );
+        await updateDoc(camDoc.ref, { pneus_ids: [], posicoes: camPosLimpas });
+      }
+    }
+  }
+  await deleteDoc(doc(db, "veiculos", veiculoId));
+}
+
+export async function adicionarPneuAoVeiculoFrota(veiculoId, pneuId, pneuNumero, usuarioId, usuarioNome) {
+  const vRef  = doc(db, "veiculos", veiculoId);
+  const vSnap = await getDoc(vRef);
+  const v     = vSnap.data();
+  await addDoc(collection(db, "veiculos", veiculoId, "movimentacoes"), {
+    veiculo_id: veiculoId, veiculo_nome: v.nome,
+    pneu_saiu: null, pneu_saiu_numero: null,
+    pneu_entrou: pneuId, pneu_entrou_numero: pneuNumero,
+    data: serverTimestamp(), usuario_id: usuarioId, usuario_nome: usuarioNome,
+  });
+  await updateDoc(vRef, { pneus_ids: arrayUnion(pneuId) });
+  await updateDoc(doc(db, "pneus", pneuId), {
+    status: "em_uso", caminhao_id: veiculoId, caminhao_nome: v.nome,
+    obra_id_atual: null, obra_nome: "Frota",
+  });
+}
+
+export async function removerPneuDoVeiculoFrota(veiculoId, pneuId, pneuNumero, usuarioId, usuarioNome) {
+  const vRef  = doc(db, "veiculos", veiculoId);
+  const vSnap = await getDoc(vRef);
+  const v     = vSnap.data();
+
+  // Limpa posicoes da frota
+  const frotaPosClear = (v.posicoes || []).map(p =>
+    p.pneu_id === pneuId ? { ...p, pneu_id: null, pneu_numero: null } : p
+  );
+
+  await addDoc(collection(db, "veiculos", veiculoId, "movimentacoes"), {
+    veiculo_id: veiculoId, veiculo_nome: v.nome,
+    pneu_saiu: pneuId, pneu_saiu_numero: pneuNumero,
+    pneu_entrou: null, pneu_entrou_numero: null,
+    data: serverTimestamp(), usuario_id: usuarioId, usuario_nome: usuarioNome,
+  });
+  await updateDoc(vRef, {
+    pneus_ids: arrayRemove(pneuId),
+    posicoes:  frotaPosClear,
+  });
+  await updateDoc(doc(db, "pneus", pneuId), {
+    status: "disponivel", caminhao_id: null, caminhao_nome: null,
+    obra_id_atual: null, obra_nome: null,
+  });
+
+  // Sync: limpa posicoes e pneus_ids nos caminhoes de obras vinculadas
+  const obrasSnap = await getDocs(query(collection(db, "obras"), where("status", "==", "aberta")));
+  for (const obraDoc of obrasSnap.docs) {
+    const camsSnap = await getDocs(
+      query(collection(db, "obras", obraDoc.id, "caminhoes"),
+            where("frota_veiculo_id", "==", veiculoId))
+    );
+    for (const camDoc of camsSnap.docs) {
+      const camPosicoes = (camDoc.data().posicoes || []).map(p =>
+        p.pneu_id === pneuId ? { ...p, pneu_id: null, pneu_numero: null } : p
+      );
+      await updateDoc(camDoc.ref, {
+        pneus_ids: arrayRemove(pneuId),
+        posicoes:  camPosicoes,
+      });
+    }
+  }
+}
+
+export async function trocarPneuNoVeiculoFrota(
+  veiculoId, pneuSaiuId, pneuSaiuNumero, pneuEntrouId, pneuEntrouNumero, usuarioId, usuarioNome
+) {
+  const vRef  = doc(db, "veiculos", veiculoId);
+  const vSnap = await getDoc(vRef);
+  const v     = vSnap.data();
+  await addDoc(collection(db, "veiculos", veiculoId, "movimentacoes"), {
+    veiculo_id: veiculoId, veiculo_nome: v.nome,
+    pneu_saiu: pneuSaiuId, pneu_saiu_numero: pneuSaiuNumero,
+    pneu_entrou: pneuEntrouId, pneu_entrou_numero: pneuEntrouNumero,
+    data: serverTimestamp(), usuario_id: usuarioId, usuario_nome: usuarioNome,
+  });
+  await updateDoc(vRef, { pneus_ids: arrayRemove(pneuSaiuId) });
+  await updateDoc(vRef, { pneus_ids: arrayUnion(pneuEntrouId) });
+  await updateDoc(doc(db, "pneus", pneuSaiuId), {
+    status: "disponivel", caminhao_id: null, caminhao_nome: null, obra_id_atual: null, obra_nome: null,
+  });
+  await updateDoc(doc(db, "pneus", pneuEntrouId), {
+    status: "em_uso", caminhao_id: veiculoId, caminhao_nome: v.nome, obra_id_atual: null, obra_nome: "Frota",
+  });
+
+  // Sync posicoes nas obras abertas vinculadas
+  const obrasSnap2 = await getDocs(query(collection(db, "obras"), where("status", "==", "aberta")));
+  for (const obraDoc of obrasSnap2.docs) {
+    const camsSnap = await getDocs(
+      query(collection(db, "obras", obraDoc.id, "caminhoes"),
+            where("frota_veiculo_id", "==", veiculoId))
+    );
+    for (const camDoc of camsSnap.docs) {
+      const camPos = (camDoc.data().posicoes || []).map(p => {
+        if (p.pneu_id === pneuSaiuId) return { ...p, pneu_id: null, pneu_numero: null };
+        return p;
+      });
+      await updateDoc(camDoc.ref, {
+        pneus_ids: arrayRemove(pneuSaiuId),
+        posicoes:  camPos,
+      });
+      await updateDoc(camDoc.ref, { pneus_ids: arrayUnion(pneuEntrouId) });
+    }
+  }
+}
+
+export async function atualizarPosicaoVeiculoFrota(veiculoId, posicaoId, dados) {
+  const vRef  = doc(db, "veiculos", veiculoId);
+  const vSnap = await getDoc(vRef);
+  if (!vSnap.exists()) return;
+  const novas = (vSnap.data().posicoes || []).map(p => p.id === posicaoId ? { ...p, ...dados } : p);
+  await updateDoc(vRef, { posicoes: novas });
+}
+
+export async function listarMovimentacoesFrota(veiculoId) {
+  const snap = await getDocs(
+    query(collection(db, "veiculos", veiculoId, "movimentacoes"), orderBy("data", "desc"))
+  );
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 // ─────────────────────────────────────────────

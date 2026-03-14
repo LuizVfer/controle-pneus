@@ -201,7 +201,7 @@ function criarCard(obra, index) {
   card.querySelector('.card-title').textContent = obra.nome;
 
   // Stats
-  card.querySelector('.stat-caminhoes').textContent = obra.qtd_caminhoes ?? '—';
+  card.querySelector('.stat-caminhoes').textContent = obra.qtd_caminhoes  ?? '—';
   card.querySelector('.stat-criador').textContent   = obra.criado_por_nome ?? '—';
 
   // Tempo em aberto / duração

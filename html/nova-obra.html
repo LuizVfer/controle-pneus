@@ -21,13 +21,10 @@
 
   <div class="bg-grid"></div>
 
-  <!-- ── Navbar ─────────────────────────────── -->
   <header class="navbar">
     <div class="navbar-brand">
       <a href="dashboard.html" class="back-btn" title="Voltar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       </a>
       <div class="navbar-icon">
         <svg viewBox="0 0 64 64" fill="none">
@@ -44,24 +41,19 @@
     </div>
     <div class="navbar-right">
       <button class="theme-toggle" title="Alternar tema">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="5"/>
           <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
           <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
         </svg>
       </button>
       <div class="user-avatar" id="userAvatar">?</div>
     </div>
   </header>
 
-  <!-- ── Conteúdo ───────────────────────────── -->
   <main class="main-content">
 
     <div class="page-header">
@@ -74,10 +66,10 @@
     <form id="formNovaObra" novalidate>
       <div class="form-layout">
 
-        <!-- ── Coluna principal ──────────────── -->
+        <!-- Coluna principal -->
         <div class="col-main">
 
-          <!-- Seção: Dados da obra -->
+          <!-- Dados da obra -->
           <div class="section-card">
             <div class="section-header">
               <div class="section-icon">
@@ -91,22 +83,14 @@
                 <p class="section-sub">Informações gerais da obra</p>
               </div>
             </div>
-
             <div class="field-group">
               <label class="field-label">Nome da Obra *</label>
-              <input
-                type="text"
-                id="nomeObra"
-                class="field-input"
-                placeholder="Ex: Obra Rodovia SP-310 km 42"
-                maxlength="100"
-                required
-              />
+              <input type="text" id="nomeObra" class="field-input" placeholder="Ex: Obra Rodovia SP-310 km 42" maxlength="100" required />
               <span class="field-error" id="nomeObraError"></span>
             </div>
           </div>
 
-          <!-- Seção: Caminhões -->
+          <!-- Veículos da frota -->
           <div class="section-card">
             <div class="section-header">
               <div class="section-icon">
@@ -118,39 +102,54 @@
                 </svg>
               </div>
               <div>
-                <h2 class="section-title">Caminhões</h2>
-                <p class="section-sub">Adicione os caminhões desta obra</p>
+                <h2 class="section-title">Veículos da Frota</h2>
+                <p class="section-sub">Selecione os veículos para esta obra</p>
               </div>
-              <button type="button" class="btn-add" id="btnAddCaminhao">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Adicionar
-              </button>
             </div>
 
-            <div class="lista-caminhoes" id="listaCaminhoes">
-              <!-- itens inseridos via JS -->
-              <div class="empty-lista" id="emptyCaminhoes">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="1" y="3" width="15" height="13" rx="2"/>
-                  <path d="M16 8h4l3 3v5h-7V8z"/>
-                  <circle cx="5.5" cy="18.5" r="2.5"/>
-                  <circle cx="18.5" cy="18.5" r="2.5"/>
-                </svg>
-                <p>Nenhum caminhão adicionado</p>
-              </div>
+            <!-- Busca -->
+            <div class="frota-busca-wrap">
+              <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="buscaFrota" class="field-input busca-frota-input" placeholder="Buscar por nome ou placa..." />
             </div>
-            <span class="field-error" id="caminhoesError"></span>
+
+            <!-- Loading -->
+            <div class="frota-loading" id="frotaLoading">
+              <div class="spinner-sm"></div>
+              <span>Carregando veículos da frota...</span>
+            </div>
+
+            <!-- Lista -->
+            <div class="frota-lista" id="frotaLista" style="display:none"></div>
+
+            <!-- Sem frota cadastrada -->
+            <div class="frota-vazia" id="frotaVazia" style="display:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="1" y="3" width="15" height="13" rx="2"/>
+                <path d="M16 8h4l3 3v5h-7V8z"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+              <p>Nenhum veículo cadastrado na frota.<br/>
+                <a href="veiculos.html" class="link-frota">Cadastrar veículos →</a>
+              </p>
+            </div>
+
+            <!-- Sem resultado na busca -->
+            <div class="frota-sem-resultado" id="frotaSemResultado" style="display:none">
+              <p>Nenhum veículo encontrado para "<span id="buscaTermoExibido"></span>".</p>
+            </div>
+
+            <span class="field-error" id="veiculosError"></span>
           </div>
-
 
         </div>
 
-        <!-- ── Coluna lateral (resumo) ──────── -->
+        <!-- Coluna lateral (resumo) -->
         <div class="col-side">
-          <div class="summary-card" id="summaryCard">
+          <div class="summary-card">
             <h3 class="summary-title">Resumo</h3>
 
             <div class="summary-item">
@@ -159,17 +158,25 @@
             </div>
             <div class="summary-divider"></div>
             <div class="summary-item">
-              <span class="summary-label">Caminhões</span>
-              <span class="summary-value accent" id="sumCaminhoes">0</span>
+              <span class="summary-label">Veículos</span>
+              <span class="summary-value accent" id="sumVeiculos">0</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Pneus totais</span>
+              <span class="summary-value" id="sumPneus">0</span>
+            </div>
+
+            <div id="summaryVeiculoLista" style="display:none">
+              <div class="summary-divider" style="margin: 14px 0 12px"></div>
+              <p class="summary-sub-title">Selecionados</p>
+              <div id="summaryVeiculoItens"></div>
             </div>
 
             <div class="summary-divider" style="margin: 20px 0 16px"></div>
 
             <button type="submit" class="btn-criar" id="btnCriar">
               <span class="btn-text">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 Criar Obra
               </span>
               <span class="btn-loader" style="display:none">
@@ -189,35 +196,6 @@
 
   </main>
 
-  <!-- ── Template caminhão ─────────────────── -->
-  <template id="tmplCaminhao">
-    <div class="item-caminhao" data-idx="">
-      <div class="item-num"></div>
-      <div class="item-fields">
-        <div class="field-group">
-          <label class="field-label">Nome do Caminhão *</label>
-          <input type="text" class="field-input campo-nome-caminhao" placeholder="Ex: Scania R450" maxlength="60" required />
-          <span class="field-error erro-nome-caminhao"></span>
-        </div>
-        <div class="field-group">
-          <label class="field-label">Placa <span class="optional">(opcional)</span></label>
-          <input type="text" class="field-input campo-placa-caminhao" placeholder="Ex: ABC-1234" maxlength="10" />
-        </div>
-      </div>
-      <button type="button" class="btn-remover" title="Remover">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3 6 5 6 21 6"/>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-          <path d="M10 11v6M14 11v6"/>
-          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-        </svg>
-      </button>
-    </div>
-  </template>
-
-
-
-  <!-- ── Toast ──────────────────────────────── -->
   <div class="toast" id="toast" style="display:none">
     <span class="toast-icon"></span>
     <span id="toastMsg"></span>

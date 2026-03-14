@@ -589,3 +589,971 @@
   .tab-btn span:not(.tab-count) { display: none; }
   .tab-btn svg { display: block; }
 }
+/* ═══════════════════════════════════════════════
+
+/* ═══════════════════════════════════════════════
+   FILTRO DE VEÍCULOS
+═══════════════════════════════════════════════ */
+.veiculo-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 4px;
+  flex-wrap: wrap;
+}
+
+/* Campo de busca dentro da filter bar — reutiliza modal-busca-pneu com ajuste */
+.veiculo-filter-bar .frota-busca {
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+}
+
+/* Select de tipo de veículo na filter bar */
+.select-filter-sm {
+  padding: 8px 28px 8px 12px;
+  background: var(--input-bg, var(--superficie));
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  color: var(--texto-sub);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238896B0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 13px;
+  min-width: 160px;
+  transition: border-color var(--transition);
+}
+.select-filter-sm:focus { border-color: var(--accent); }
+
+.veiculo-filter-count {
+  font-size: 12px;
+  color: var(--texto-muted);
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════
+   MODAL: BUSCA DE PNEUS (corrigido)
+═══════════════════════════════════════════════ */
+.modal-busca-pneu {
+  position: relative;
+  margin-bottom: 8px;
+}
+.modal-busca-pneu .busca-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--texto-muted);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.modal-busca-pneu .busca-input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto);
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.modal-busca-pneu .busca-input:focus { border-color: var(--accent); }
+.modal-busca-pneu .busca-input::placeholder { color: var(--texto-muted); }
+
+/* ═══════════════════════════════════════════════
+   DIAGRAMA DE EIXOS — REDESIGN
+═══════════════════════════════════════════════ */
+
+.diagrama-container {
+  padding: 0 16px 12px;
+}
+
+.diagrama-wrap {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+}
+
+/* ── Cabeçalho do diagrama ── */
+.diagrama-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.diagrama-labels-dir {
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+}
+.diagrama-dir-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-muted);
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+}
+.diagrama-progresso-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.diagrama-progresso {
+  width: 80px;
+  height: 5px;
+  background: var(--borda);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.diagrama-prog-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+.diagrama-pct {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ── Corpo ── */
+.diagrama-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+}
+
+/* Faixa central — corpo do veículo */
+.diagrama-body-faixa {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  bottom: -6px;
+  transform: translateX(-50%);
+  width: 64px;
+  background: var(--superficie-2, rgba(0,0,0,0.05));
+  border: 2px solid var(--borda);
+  border-radius: 10px;
+  z-index: 0;
+  pointer-events: none;
+}
+[data-theme="dark"] .diagrama-body-faixa {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--borda-light);
+}
+
+/* ── Linha de eixo ── */
+.diagrama-row {
+  display: grid;
+  grid-template-columns: 1fr 64px 1fr;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  min-height: 88px;
+}
+
+.diagrama-lado {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.diagrama-lado.esq { justify-content: flex-end; }
+.diagrama-lado.dir { justify-content: flex-start; }
+
+/* ── Centro do eixo ── */
+.diagrama-centro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.eixo-line {
+  height: 5px;
+  flex: 1;
+  background: linear-gradient(90deg, var(--borda), var(--borda-light));
+  flex-shrink: 0;
+}
+.diagrama-lado.esq + .diagrama-centro .eixo-line:first-child,
+.diagrama-lado.dir .diagrama-centro .eixo-line:last-child {
+  background: var(--borda-light);
+}
+.eixo-lbl {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--texto-muted);
+  letter-spacing: 0.5px;
+  background: var(--card);
+  border: 2px solid var(--borda-light);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 0 3px var(--superficie);
+}
+
+/* Frente / Trás */
+.diagrama-frente-tras {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--texto-muted);
+  opacity: 0.5;
+  margin-top: 10px;
+  letter-spacing: 0.5px;
+  padding: 0 2px;
+}
+
+/* ══════════════════════════════════════════
+   RODA — retrato, como pneu real visto de cima
+══════════════════════════════════════════ */
+.roda {
+  width: 40px;
+  height: 80px;
+  border-radius: 8px;
+  border: 2.5px dashed var(--borda-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s, box-shadow 0.15s;
+  background: var(--superficie);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.roda::before {
+  content: '';
+  position: absolute;
+  top: 6px; bottom: 6px;
+  left: 50%; transform: translateX(-50%);
+  width: 6px;
+  border-radius: 3px;
+  background: var(--borda);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: background 0.15s;
+}
+.roda:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: scale(1.05);
+  box-shadow: 0 2px 10px rgba(232,180,0,0.25);
+  z-index: 2;
+}
+.roda:hover::before { background: var(--accent); opacity: 0.4; }
+
+.roda.ocupado {
+  border: 2.5px solid var(--accent);
+  background: var(--accent);
+}
+.roda.ocupado::before {
+  background: rgba(0,0,0,0.25);
+  opacity: 1;
+}
+.roda.ocupado:hover {
+  box-shadow: 0 3px 12px rgba(232,180,0,0.45);
+  transform: scale(1.05);
+  z-index: 2;
+  background: var(--accent-dark);
+}
+
+/* Ícone + dentro da roda vazia */
+.roda-plus {
+  font-size: 22px;
+  color: var(--borda-light);
+  line-height: 1;
+  font-weight: 300;
+  transition: color 0.15s;
+  position: relative;
+  z-index: 1;
+}
+.roda:hover .roda-plus { color: var(--accent); }
+
+/* Número na roda — horizontal, 2 linhas */
+.roda-num {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  color: #0F1117;
+  writing-mode: horizontal-tb;
+  transform: none;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: normal;
+  word-break: break-all;
+  overflow: hidden;
+  width: 34px;
+  line-height: 1.25;
+  position: relative;
+  z-index: 1;
+}
+
+/* Rolo compactador */
+.rolo-badge {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--texto-muted);
+  background: var(--borda-soft, var(--borda));
+  border: 1px solid var(--borda);
+  border-radius: 5px;
+  padding: 24px 8px;
+  opacity: 0.65;
+  width: 40px;
+  text-align: center;
+  writing-mode: vertical-rl;
+}
+
+/* Sem diagrama */
+.diagrama-sem-dados {
+  padding: 14px;
+  font-size: 12px;
+  color: var(--texto-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ── Card de veículo ── */
+.veiculo-tag {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-bottom: 4px;
+}
+.caminhao-tipo-nome {
+  font-size: 11px;
+  color: var(--texto-muted);
+  margin-top: 2px;
+}
+.caminhao-pneus-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 14px;
+  font-size: 12px;
+  border-top: 1px solid var(--borda-soft, var(--borda));
+  margin-top: 4px;
+}
+.pneus-count { color: var(--texto-muted); }
+.pneus-falta { color: var(--accent); font-weight: 600; }
+.pneus-completo { color: #4CAF50; font-weight: 600; }
+
+/* ── Modal: opções da posição ── */
+.opcoes-pneu-info {
+  background: var(--superficie-2, var(--superficie));
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.opcoes-pneu-num {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.opcoes-pneu-pos {
+  font-size: 13px;
+  color: var(--texto-muted);
+  margin-top: 4px;
+}
+.opcoes-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.btn-opcao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border: 1px solid var(--borda);
+  border-radius: 9px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  text-align: left;
+  width: 100%;
+}
+.btn-opcao:hover { background: var(--hover); border-color: var(--accent); transform: translateX(2px); }
+.btn-opcao.trocar { color: var(--accent); }
+.btn-opcao.trocar:hover { background: var(--accent-soft); border-color: var(--accent); }
+.btn-opcao.remover { color: var(--erro); }
+.btn-opcao.remover:hover { background: rgba(220,53,69,0.08); border-color: var(--erro); }
+.btn-opcao svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════
+   HISTÓRICO — TABELA
+═══════════════════════════════════════════════ */
+
+.historico-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 8px;
+  flex-wrap: wrap;
+}
+.historico-busca { flex: 1; min-width: 180px; }
+
+.historico-tabela-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--superficie);
+}
+
+.historico-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.historico-tabela thead tr {
+  border-bottom: 2px solid var(--borda);
+  background: var(--superficie-2, var(--superficie));
+}
+.historico-tabela thead th {
+  padding: 11px 14px;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--texto-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+/* Linhas */
+.hist-row {
+  border-bottom: 1px solid var(--borda-soft, var(--borda));
+  transition: background 0.12s;
+  animation: fadeInUp 0.2s ease both;
+}
+.hist-row:last-child { border-bottom: none; }
+.hist-row:hover { background: var(--hover, rgba(0,0,0,0.03)); }
+
+.historico-tabela td {
+  padding: 11px 14px;
+  vertical-align: middle;
+}
+
+/* Badge de ação */
+.hist-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+.badge-add   { background: rgba(76,175,80,0.15);  color: #4CAF50; border: 1px solid rgba(76,175,80,0.3); }
+.badge-rem   { background: rgba(220,53,69,0.12);  color: var(--erro); border: 1px solid rgba(220,53,69,0.25); }
+.badge-troca { background: var(--accent-soft);    color: var(--accent); border: 1px solid rgba(232,180,0,0.3); }
+
+/* Células */
+.hist-veiculo {
+  font-weight: 600;
+  color: var(--texto);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hist-pneu {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+.hist-pneu.saiu   { background: rgba(220,53,69,0.1);  color: var(--erro); }
+.hist-pneu.entrou { background: rgba(76,175,80,0.1);  color: #4CAF50; }
+.hist-vazio { color: var(--texto-muted); font-size: 13px; }
+
+.hist-usuario {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--texto-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.hist-usuario svg { flex-shrink: 0; opacity: 0.6; }
+
+.hist-data { white-space: nowrap; }
+.hist-data-principal {
+  display: block;
+  font-size: 13px;
+  color: var(--texto);
+  font-weight: 500;
+}
+.hist-data-hora {
+  display: block;
+  font-size: 11px;
+  color: var(--texto-muted);
+  margin-top: 1px;
+}
+
+/* Estado vazio da tabela */
+.historico-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 24px;
+  color: var(--texto-muted);
+  font-size: 14px;
+}
+.historico-empty svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.3;
+}
+
+/* Botão ver mais */
+.btn-mais-trocas {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--borda);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: var(--font-body);
+  border-radius: 0 0 12px 12px;
+}
+.btn-mais-trocas:hover { background: var(--accent-soft); }
+
+/* ═══════════════════════════════════════════════
+   HISTÓRICO — CARDS
+═══════════════════════════════════════════════ */
+
+.historico-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 14px;
+  flex-wrap: wrap;
+}
+.historico-busca { flex: 1; min-width: 180px; }
+
+/* Tabs de tipo */
+.hist-tipo-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 3px;
+}
+.hist-tipo-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--texto-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.hist-tipo-btn.active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+}
+.hist-tipo-btn:not(.active):hover {
+  background: var(--hover);
+  color: var(--texto);
+}
+
+/* Wrapper dos cards */
+.historico-cards-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.historico-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Card base */
+.hcard {
+  display: flex;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  background: var(--superficie);
+  overflow: hidden;
+  transition: transform 0.12s, box-shadow 0.12s;
+  animation: fadeInUp 0.22s ease both;
+}
+.hcard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+/* Stripe lateral colorida */
+.hcard-stripe {
+  width: 4px;
+  flex-shrink: 0;
+}
+.card-add  .hcard-stripe { background: #4CAF50; }
+.card-rem  .hcard-stripe { background: var(--erro, #dc3545); }
+.card-troca .hcard-stripe { background: var(--accent); }
+
+/* Corpo do card */
+.hcard-body {
+  flex: 1;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Topo: badge + veículo à esquerda, data à direita */
+.hcard-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.hcard-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hcard-veiculo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+.hcard-veiculo svg { opacity: 0.5; flex-shrink: 0; }
+
+.hcard-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+.hcard-data {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+}
+.hcard-hora {
+  font-size: 11px;
+  color: var(--texto-muted);
+  margin-top: 2px;
+}
+
+/* Bloco de pneus */
+.hcard-pneu-flow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hcard-pneu-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  min-width: 130px;
+}
+.hcard-pneu-box.saiu {
+  background: rgba(220,53,69,0.07);
+  border: 1px solid rgba(220,53,69,0.2);
+}
+.hcard-pneu-box.entrou {
+  background: rgba(76,175,80,0.07);
+  border: 1px solid rgba(76,175,80,0.2);
+}
+.hcard-pneu-dir {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.hcard-pneu-box.saiu .hcard-pneu-dir   { color: var(--erro); }
+.hcard-pneu-box.entrou .hcard-pneu-dir  { color: #4CAF50; }
+.hcard-pneu-num {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.hcard-pneu-box.saiu .hcard-pneu-num   { color: var(--erro); }
+.hcard-pneu-box.entrou .hcard-pneu-num  { color: #4CAF50; }
+
+.hcard-troca-arrow {
+  color: var(--texto-muted);
+  opacity: 0.4;
+}
+.hcard-troca-arrow svg { width: 20px; height: 20px; }
+
+/* Rodapé: usuário */
+.hcard-footer {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--texto-muted);
+  padding-top: 4px;
+  border-top: 1px solid var(--borda-soft, var(--borda));
+}
+.hcard-footer svg { opacity: 0.5; flex-shrink: 0; }
+
+/* Estado vazio */
+.historico-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 56px 24px;
+  color: var(--texto-muted);
+  font-size: 14px;
+  text-align: center;
+}
+.historico-empty svg { width: 44px; height: 44px; opacity: 0.25; }
+
+/* Botão ver mais */
+.btn-mais-trocas {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px;
+  background: var(--superficie);
+  border: 1px dashed var(--borda);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-body);
+}
+.btn-mais-trocas:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+/* Tag de tipo dentro do card do histórico */
+.hcard-veiculo-tag {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Modal seletor de frota ─────────────────── */
+.modal-frota { max-width: 520px; max-height: 88vh; display: flex; flex-direction: column; }
+.modal-frota .modal-body { flex: 1; overflow-y: auto; gap: 12px; }
+
+.frota-busca-wrap {
+  position: relative;
+}
+.frota-busca-wrap .busca-icon {
+  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  width: 15px; height: 15px; color: var(--texto-muted); pointer-events: none;
+}
+
+.frota-modal-loading {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 0; font-size: 13px; color: var(--texto-muted);
+}
+
+.frota-modal-lista {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 340px; overflow-y: auto; padding-right: 2px;
+}
+
+.frota-modal-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px;
+  background: var(--cinza-soft);
+  border: 1.5px solid var(--borda);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.frota-modal-item:hover:not(.ja-adicionado) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.frota-modal-item.selecionado {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.frota-modal-item.ja-adicionado {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.frota-modal-item.ja-adicionado .check-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.frota-modal-item.ja-adicionado .check-box svg { display: block; }
+
+.frota-item-badge-ja {
+  font-size: 10px; font-weight: 700;
+  color: var(--texto-muted);
+  background: var(--hover);
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.frota-modal-vazio {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; padding: 28px 16px;
+  color: var(--texto-muted); text-align: center;
+  border: 1.5px dashed var(--borda); border-radius: 10px;
+}
+.frota-modal-vazio svg { opacity: 0.25; }
+.frota-modal-vazio p   { font-size: 13px; margin: 0; line-height: 1.6; }
+
+@media (max-width: 640px) {
+  .modal-frota { max-height: 92vh; }
+  .frota-modal-lista { max-height: 45vh; }
+}
+
+/* ── Histórico toolbar ───────────────────────── */
+.hist-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--borda);
+  margin-bottom: 16px;
+}
+.hist-tipo-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.hist-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.hist-busca-wrap {
+  position: relative;
+}
+.hist-busca-wrap .busca-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; color: var(--texto-muted); pointer-events: none;
+}
+.hist-busca-input {
+  padding: 7px 12px 7px 30px;
+  background: var(--card);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto);
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+.hist-busca-input:focus { border-color: var(--accent); }
+.hist-busca-input::placeholder { color: var(--texto-muted); }
+.hist-count {
+  font-size: 12px;
+  color: var(--texto-muted);
+  white-space: nowrap;
+}
+
+/* Botão ver mais */
+.btn-mais-hist {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: var(--cinza-soft);
+  border: 1px dashed var(--borda);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  margin-top: 8px;
+}
+.btn-mais-hist:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+.hist-cards { display: flex; flex-direction: column; gap: 10px; }
+
+@media (max-width: 640px) {
+  .hist-toolbar { flex-direction: column; align-items: stretch; }
+  .hist-toolbar-right { margin-left: 0; }
+  .hist-busca-input { width: 100%; }
+}

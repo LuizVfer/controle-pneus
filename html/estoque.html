@@ -60,18 +60,29 @@
         <p class="page-breadcrumb">Dashboard / Estoque</p>
         <h1 class="page-title">Estoque de Pneus</h1>
       </div>
-      <button class="btn-add-estoque" id="btnAddEstoque">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Adicionar Pneus
-      </button>
+      <div class="action-bar-right">
+        <button class="btn-add-estoque" id="btnAddEstoque">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Adicionar Pneus
+        </button>
+      </div>
     </div>
 
-    <!-- KPIs -->
+    <!-- Tabs de estoque cidade -->
+    <div class="estoques-tabs-wrap">
+      <div class="estoques-tabs" id="estoquesTabs"></div>
+    </div>
+
+    <!-- KPIs do estoque ativo -->
     <div class="kpi-row">
+      <div class="kpi-card" style="grid-column: 1/-1; padding-bottom: 6px;">
+        <span class="kpi-label">Estoque selecionado</span>
+        <span class="kpi-value estoque-ativo-nome" id="estoqueNomeLabel" style="font-size:18px">—</span>
+      </div>
       <div class="kpi-card">
-        <span class="kpi-label">Total no estoque</span>
+        <span class="kpi-label">Total</span>
         <span class="kpi-value" id="kpiTotal">—</span>
       </div>
       <div class="kpi-card verde">
@@ -81,6 +92,10 @@
       <div class="kpi-card accent">
         <span class="kpi-label">Em Uso</span>
         <span class="kpi-value" id="kpiEmUso">—</span>
+      </div>
+      <div class="kpi-card azul">
+        <span class="kpi-label">Em Recapagem</span>
+        <span class="kpi-value" id="kpiRecapagem">—</span>
       </div>
       <div class="kpi-card danger">
         <span class="kpi-label">Inutilizáveis</span>
@@ -94,6 +109,7 @@
         <button class="ftab active" data-filtro="todos">Todos</button>
         <button class="ftab" data-filtro="disponivel">Disponíveis</button>
         <button class="ftab" data-filtro="em_uso">Em Uso</button>
+        <button class="ftab" data-filtro="em_recapagem">Recapagem</button>
         <button class="ftab" data-filtro="inutilizavel">Inutilizáveis</button>
       </div>
       <div class="search-wrap">
@@ -119,7 +135,7 @@
         <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
       </svg>
       <h3 id="emptyTitle">Nenhum pneu encontrado</h3>
-      <p id="emptyMsg">Clique em "Adicionar Pneus" para cadastrar pneus no estoque global.</p>
+      <p id="emptyMsg">Selecione ou crie um estoque e adicione pneus.</p>
     </div>
 
   </main>
@@ -283,7 +299,150 @@
 
   <div class="toast" id="toast"></div>
 
-  <script type="module" src="../js/theme.js"></script>
+  <!-- MODAL: Novo estoque cidade -->
+  <div class="modal-overlay" id="modalNovoEstoque" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">Novo Estoque</h3>
+        <button class="modal-close" data-close="modalNovoEstoque">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label class="field-label">Nome da cidade *</label>
+          <input type="text" id="novoEstoqueNome" class="field-input" placeholder="Ex: São Paulo" maxlength="60" />
+          <span class="field-error" id="novoEstoqueNomeError"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalNovoEstoque">Cancelar</button>
+        <button class="btn-salvar" id="salvarNovoEstoque">
+          <span class="btn-text">Criar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Deletar estoque -->
+  <div class="modal-overlay" id="modalDeletarEstoque" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">Deletar Estoque</h3>
+        <button class="modal-close" data-close="modalDeletarEstoque">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Deseja deletar o estoque <strong id="deletarEstoqueNome">—</strong>?</p>
+        <p class="field-error" id="deletarEstoqueInfo"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalDeletarEstoque">Cancelar</button>
+        <button class="btn-danger" id="confirmarDeletarEstoque">
+          <span class="btn-text">Deletar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Transferir pneu -->
+  <div class="modal-overlay" id="modalTransferir" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Transferir Pneu(s)</h3>
+          <p class="modal-sub">
+            <span id="transferirPneuNum">—</span> · De:
+            <strong id="transferirPneuOrigem">—</strong>
+          </p>
+        </div>
+        <button class="modal-close" data-close="modalTransferir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="field-label">Selecione o destino</p>
+        <div class="estoque-select-lista" id="transferirEstoqueLista"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalTransferir">Cancelar</button>
+        <button class="btn-salvar" id="confirmarTransferir" disabled>
+          <span class="btn-text">Transferir</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Enviar para recapagem -->
+  <div class="modal-overlay" id="modalRecapar" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div class="modal-header-icon azul">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Enviar para Recapagem</h3>
+          <p class="modal-sub">O pneu ficará indisponível até voltar</p>
+        </div>
+        <button class="modal-close" data-close="modalRecapar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-confirm-msg">
+          Deseja enviar o pneu <strong id="recaparNum">—</strong> para recapagem?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalRecapar">Cancelar</button>
+        <button class="btn-azul-sm" id="confirmarRecapar">
+          <span class="btn-text">Enviar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Recebido da recapagem -->
+  <div class="modal-overlay" id="modalRecebidoRecapagem" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div class="modal-header-icon verde">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Pneu Recapado</h3>
+          <p class="modal-sub">O pneu voltará ao estoque como disponível</p>
+        </div>
+        <button class="modal-close" data-close="modalRecebidoRecapagem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-confirm-msg">
+          Confirmar chegada do pneu <strong id="recebidoNum">—</strong> da recapagem?
+        </p>
+        <p class="modal-recapagem-hint" id="recebidoHint"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalRecebidoRecapagem">Cancelar</button>
+        <button class="btn-verde-sm" id="confirmarRecebido">
+          <span class="btn-text">Confirmar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+    <script type="module" src="../js/theme.js"></script>
   <script type="module" src="../js/estoque.js"></script>
 </body>
 </html>

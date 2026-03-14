@@ -339,3 +339,248 @@
   .lote-controls { flex-direction: column; align-items: stretch; }
   .lote-input { width: 100%; }
 }
+
+/* ── Tipo info box ──────────────────────────── */
+.tipo-info-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(232,180,0,0.2);
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.tipo-tag {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(232,180,0,0.15);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: 4px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+.tipo-pneus-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto);
+  flex-shrink: 0;
+}
+.tipo-descricao {
+  font-size: 11px;
+  color: var(--texto-muted);
+  font-style: italic;
+  flex: 1;
+}
+
+/* ── Fields em linha (nome + placa) ────────── */
+.fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 480px) {
+  .fields-row { grid-template-columns: 1fr; }
+}
+
+/* ── Resumo lateral — lista de veículos ─────── */
+.summary-sub-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px;
+}
+.summary-veiculo-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--borda-soft);
+  font-size: 12px;
+}
+.summary-veiculo-item:last-child { border-bottom: none; }
+.summary-veiculo-tag {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+.summary-veiculo-nome {
+  flex: 1;
+  color: var(--texto);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.summary-veiculo-pneus {
+  color: var(--texto-muted);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* ─── Seletor de frota ───────────────────────── */
+.frota-busca-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+.frota-busca-wrap .busca-icon {
+  position: absolute;
+  left: 12px; top: 50%; transform: translateY(-50%);
+  width: 15px; height: 15px;
+  color: var(--texto-muted); pointer-events: none;
+}
+.busca-frota-input {
+  padding-left: 36px !important;
+}
+
+.spinner-sm {
+  width: 20px; height: 20px;
+  border: 2px solid var(--borda);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.frota-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0;
+  font-size: 13px;
+  color: var(--texto-muted);
+}
+
+.frota-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.frota-vazia,
+.frota-sem-resultado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
+  color: var(--texto-muted);
+  border: 1.5px dashed var(--borda);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.frota-vazia svg { width: 36px; height: 36px; opacity: 0.3; }
+.frota-vazia p, .frota-sem-resultado p { font-size: 13px; margin: 0; line-height: 1.6; }
+.link-frota {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.link-frota:hover { text-decoration: underline; }
+
+/* ── Card de veículo selecionável ── */
+.frota-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--cinza-soft);
+  border: 1.5px solid var(--borda);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  animation: fadeUp 0.2s ease both;
+  user-select: none;
+}
+.frota-item:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.frota-item.selecionado {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Checkbox visual */
+.frota-item-check { flex-shrink: 0; }
+.check-box {
+  width: 22px; height: 22px;
+  border: 2px solid var(--borda);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--card);
+}
+.check-box svg { width: 12px; height: 12px; color: #000; display: none; }
+.frota-item:hover .check-box { border-color: var(--accent); }
+.check-box.marcado {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.check-box.marcado svg { display: block; }
+
+/* Info do veículo */
+.frota-item-info { flex: 1; min-width: 0; }
+.frota-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.frota-item-tag {
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700;
+  color: var(--accent);
+  background: rgba(232,180,0,0.12);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: 4px;
+  padding: 1px 7px;
+  flex-shrink: 0;
+}
+.frota-item-nome {
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 700;
+  color: var(--texto);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.frota-item-placa {
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700;
+  color: var(--texto-muted);
+  background: var(--cinza-soft);
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+  padding: 1px 7px;
+  flex-shrink: 0;
+}
+.frota-item-sub {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.frota-item-tipo  { font-size: 12px; color: var(--texto-muted); }
+.frota-item-pneus {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--texto-muted);
+}
+
+/* ─── Responsivo ─────────────────────────────── */
+@media (max-width: 480px) {
+  .frota-lista { max-height: 55vh; }
+  .frota-item  { padding: 11px 12px; }
+  .frota-item-nome { font-size: 14px; }
+}

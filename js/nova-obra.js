@@ -1,5 +1,5 @@
 // ============================================================
-//  js/nova-obra.js — Lógica da tela Nova Obra
+//  js/nova-obra.js — Nova Obra (seleciona veículos da frota)
 // ============================================================
 
 import {
@@ -8,124 +8,185 @@ import {
   criarObra,
   adicionarCaminhao,
   logout,
+  listarVeiculosFrota,
 } from './firebase.js';
 
+import { getTipoVeiculo } from './veiculos-tipos.js';
+
 // ─── Estado ───────────────────────────────────
-let usuarioLogado = null;
-let caminhoes     = []; // [{ nome, placa, idx }]
-let contCaminhao  = 0;
+let usuarioLogado    = null;
+let todosVeiculos    = [];   // todos da frota
+let selecionados     = new Set(); // ids selecionados
+let termoBusca       = '';
 
 // ─── Elementos ────────────────────────────────
-const userAvatar     = document.getElementById('userAvatar');
-const formNovaObra   = document.getElementById('formNovaObra');
-const nomeObra       = document.getElementById('nomeObra');
-const nomeObraError  = document.getElementById('nomeObraError');
-const btnCriar       = document.getElementById('btnCriar');
-const listaCaminhoes = document.getElementById('listaCaminhoes');
-const emptyCaminhoes = document.getElementById('emptyCaminhoes');
-const btnAddCaminhao = document.getElementById('btnAddCaminhao');
-const tmplCaminhao   = document.getElementById('tmplCaminhao');
+const userAvatar      = document.getElementById('userAvatar');
+const formNovaObra    = document.getElementById('formNovaObra');
+const nomeObra        = document.getElementById('nomeObra');
+const nomeObraError   = document.getElementById('nomeObraError');
+const btnCriar        = document.getElementById('btnCriar');
+const buscaFrota      = document.getElementById('buscaFrota');
+const frotaLista      = document.getElementById('frotaLista');
+const frotaLoading    = document.getElementById('frotaLoading');
+const frotaVazia      = document.getElementById('frotaVazia');
+const frotaSemResult  = document.getElementById('frotaSemResultado');
+const buscaTermoEl    = document.getElementById('buscaTermoExibido');
+const veiculosError   = document.getElementById('veiculosError');
 
 // Resumo
-const sumNome      = document.getElementById('sumNome');
-const sumCaminhoes = document.getElementById('sumCaminhoes');
+const sumNome             = document.getElementById('sumNome');
+const sumVeiculos         = document.getElementById('sumVeiculos');
+const sumPneus            = document.getElementById('sumPneus');
+const summaryVeiculoLista = document.getElementById('summaryVeiculoLista');
+const summaryVeiculoItens = document.getElementById('summaryVeiculoItens');
 
-// ─── Auth guard ───────────────────────────────
+// ─── Auth ──────────────────────────────────────
 observarAuth(async (user) => {
   if (!user) { window.location.href = '../html/login.html'; return; }
-
   const dados = await getDadosUsuario(user.uid);
-  if (!dados || dados.ativo === false) {
-    await logout();
-    window.location.href = '../html/login.html';
+  if (!dados || dados.ativo === false) { await logout(); window.location.href = '../html/login.html'; return; }
+  usuarioLogado = { ...dados, uid: user.uid };
+  userAvatar.textContent = dados.nome.charAt(0).toUpperCase();
+  await carregarFrota();
+});
+
+// ─── Carregar frota ────────────────────────────
+async function carregarFrota() {
+  try {
+    todosVeiculos = await listarVeiculosFrota();
+    frotaLoading.style.display = 'none';
+    if (todosVeiculos.length === 0) {
+      frotaVazia.style.display = 'flex';
+    } else {
+      frotaLista.style.display = 'flex';
+      renderLista();
+    }
+  } catch (err) {
+    console.error(err);
+    frotaLoading.style.display = 'none';
+    frotaVazia.style.display = 'flex';
+  }
+}
+
+// ─── Renderizar lista de veículos ─────────────
+function renderLista() {
+  frotaLista.innerHTML = '';
+  frotaSemResult.style.display = 'none';
+
+  const filtrados = todosVeiculos.filter(v => {
+    if (!termoBusca) return true;
+    const t = termoBusca.toLowerCase();
+    return (
+      v.nome?.toLowerCase().includes(t) ||
+      v.placa?.toLowerCase().includes(t) ||
+      v.tipo_veiculo_tag?.toLowerCase().includes(t)
+    );
+  });
+
+  if (filtrados.length === 0) {
+    buscaTermoEl.textContent = termoBusca;
+    frotaSemResult.style.display = 'flex';
     return;
   }
 
-  usuarioLogado = { ...dados, uid: user.uid };
-  userAvatar.textContent = dados.nome.charAt(0).toUpperCase();
-});
+  filtrados.forEach((v, i) => {
+    const tipo     = getTipoVeiculo(v.tipo_veiculo_id);
+    const selected = selecionados.has(v.id);
+    const pneusUso = (v.pneus_ids || []).length;
+    const pneusMax = v.qtd_pneus_tipo || tipo?.qtd_pneus || 0;
+    const pct      = pneusMax > 0 ? Math.round((pneusUso / pneusMax) * 100) : 0;
 
-// ─── Atualiza resumo lateral ──────────────────
-function atualizarResumo() {
-  const nome = nomeObra.value.trim();
-  sumNome.textContent      = nome || '—';
-  sumCaminhoes.textContent = caminhoes.length;
+    const card = document.createElement('div');
+    card.className = `frota-item${selected ? ' selecionado' : ''}`;
+    card.dataset.id = v.id;
+    card.style.animationDelay = `${i * 30}ms`;
+
+    card.innerHTML = `
+      <div class="frota-item-check">
+        <div class="check-box${selected ? ' marcado' : ''}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+      </div>
+      <div class="frota-item-info">
+        <div class="frota-item-top">
+          <span class="frota-item-tag">${v.tipo_veiculo_tag || '—'}</span>
+          <span class="frota-item-nome">${v.nome}</span>
+          ${v.placa ? `<span class="frota-item-placa">${v.placa}</span>` : ''}
+        </div>
+        <div class="frota-item-sub">
+          <span class="frota-item-tipo">${v.tipo_veiculo_nome || '—'}</span>
+          <span class="frota-item-pneus">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
+              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            ${pneusUso}/${pneusMax} pneus
+          </span>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => toggleSelecionado(v.id));
+    frotaLista.appendChild(card);
+  });
 }
 
+// ─── Toggle seleção ────────────────────────────
+function toggleSelecionado(id) {
+  if (selecionados.has(id)) {
+    selecionados.delete(id);
+  } else {
+    selecionados.add(id);
+  }
+  veiculosError.textContent = '';
+  renderLista();
+  atualizarResumo();
+}
+
+// ─── Resumo ────────────────────────────────────
+function atualizarResumo() {
+  const nome = nomeObra.value.trim();
+  sumNome.textContent = nome || '—';
+
+  const sel = todosVeiculos.filter(v => selecionados.has(v.id));
+  sumVeiculos.textContent = sel.length;
+
+  const totalPneus = sel.reduce((acc, v) => {
+    const tipo = getTipoVeiculo(v.tipo_veiculo_id);
+    return acc + (v.qtd_pneus_tipo || tipo?.qtd_pneus || 0);
+  }, 0);
+  sumPneus.textContent = totalPneus;
+
+  if (sel.length > 0) {
+    summaryVeiculoLista.style.display = 'block';
+    summaryVeiculoItens.innerHTML = sel.map(v => {
+      const tipo = getTipoVeiculo(v.tipo_veiculo_id);
+      return `
+        <div class="summary-veiculo-item">
+          <span class="summary-veiculo-tag">${v.tipo_veiculo_tag || tipo?.tag || '—'}</span>
+          <span class="summary-veiculo-nome">${v.nome}</span>
+          <span class="summary-veiculo-pneus">${v.qtd_pneus_tipo || tipo?.qtd_pneus || 0} pneus</span>
+        </div>`;
+    }).join('');
+  } else {
+    summaryVeiculoLista.style.display = 'none';
+  }
+}
+
+// ─── Busca ─────────────────────────────────────
 nomeObra.addEventListener('input', () => {
   nomeObraError.textContent = '';
   nomeObra.classList.remove('is-error');
   atualizarResumo();
 });
 
-// ─── CAMINHÕES ────────────────────────────────
+buscaFrota.addEventListener('input', () => {
+  termoBusca = buscaFrota.value.trim();
+  renderLista();
+});
 
-btnAddCaminhao.addEventListener('click', () => adicionarCaminhaoUI());
-
-function adicionarCaminhaoUI(nomeVal = '', placaVal = '') {
-  const idx   = contCaminhao++;
-  const clone = tmplCaminhao.content.cloneNode(true);
-  const item  = clone.querySelector('.item-caminhao');
-
-  item.dataset.idx = idx;
-  item.querySelector('.item-num').textContent = caminhoes.length + 1;
-
-  const inputNome  = item.querySelector('.campo-nome-caminhao');
-  const inputPlaca = item.querySelector('.campo-placa-caminhao');
-  const errNome    = item.querySelector('.erro-nome-caminhao');
-
-  inputNome.value  = nomeVal;
-  inputPlaca.value = placaVal;
-
-  const entry = { nome: nomeVal, placa: placaVal, idx };
-  caminhoes.push(entry);
-
-  inputNome.addEventListener('input', () => {
-    entry.nome = inputNome.value.trim();
-    errNome.textContent = '';
-    inputNome.classList.remove('is-error');
-    atualizarResumo();
-  });
-
-  inputPlaca.addEventListener('input', () => {
-    entry.placa = inputPlaca.value.trim().toUpperCase();
-    inputPlaca.value = entry.placa;
-  });
-
-  item.querySelector('.btn-remover').addEventListener('click', () => {
-    caminhoes = caminhoes.filter(c => c.idx !== idx);
-    item.remove();
-    renumerarCaminhoes();
-    atualizarResumo();
-    toggleEmptyCaminhoes();
-  });
-
-  listaCaminhoes.appendChild(item);
-  toggleEmptyCaminhoes();
-  atualizarResumo();
-
-  setTimeout(() => inputNome.focus(), 50);
-}
-
-function renumerarCaminhoes() {
-  listaCaminhoes.querySelectorAll('.item-num').forEach((el, i) => {
-    el.textContent = i + 1;
-  });
-}
-
-function toggleEmptyCaminhoes() {
-  if (caminhoes.length === 0) {
-    if (!listaCaminhoes.contains(emptyCaminhoes)) {
-      listaCaminhoes.appendChild(emptyCaminhoes);
-    }
-    emptyCaminhoes.style.display = 'flex';
-  } else {
-    emptyCaminhoes.style.display = 'none';
-  }
-}
-
-// ─── SUBMIT ───────────────────────────────────
-
+// ─── Submit ────────────────────────────────────
 formNovaObra.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!usuarioLogado) return;
@@ -139,51 +200,50 @@ formNovaObra.addEventListener('submit', async (e) => {
     valido = false;
   }
 
-  // Valida nomes dos caminhões
-  listaCaminhoes.querySelectorAll('.item-caminhao').forEach((item) => {
-    const inputNome = item.querySelector('.campo-nome-caminhao');
-    const errNome   = item.querySelector('.erro-nome-caminhao');
-    if (!inputNome.value.trim()) {
-      inputNome.classList.add('is-error');
-      errNome.textContent = 'Nome obrigatório.';
-      valido = false;
-    }
-  });
+  if (selecionados.size === 0) {
+    veiculosError.textContent = 'Selecione ao menos um veículo.';
+    valido = false;
+  }
 
   if (!valido) {
     mostrarToast('Corrija os erros antes de continuar.', 'error');
     return;
   }
 
-  // Coleta caminhões dos inputs
-  const caminhoesFinais = [];
-  listaCaminhoes.querySelectorAll('.item-caminhao').forEach((item) => {
-    caminhoesFinais.push({
-      nome:  item.querySelector('.campo-nome-caminhao').value.trim(),
-      placa: item.querySelector('.campo-placa-caminhao').value.trim().toUpperCase(),
-    });
-  });
+  const veiculosFinais = todosVeiculos.filter(v => selecionados.has(v.id));
+  const totalPneus     = veiculosFinais.reduce((acc, v) => {
+    const tipo = getTipoVeiculo(v.tipo_veiculo_id);
+    return acc + (v.qtd_pneus_tipo || tipo?.qtd_pneus || 0);
+  }, 0);
 
   setCarregando(true);
 
   try {
-    // 1. Cria a obra
     const obraId = await criarObra({
       nome,
-      qtd_caminhoes:   caminhoesFinais.length,
+      qtd_caminhoes:   veiculosFinais.length,
+      qtd_pneus:       totalPneus,
       criado_por:      usuarioLogado.uid,
       criado_por_nome: usuarioLogado.nome,
     });
 
-    // 2. Adiciona caminhões
-    for (const c of caminhoesFinais) {
-      await adicionarCaminhao(obraId, { nome: c.nome, placa: c.placa || null });
+    for (const v of veiculosFinais) {
+      const tipo = getTipoVeiculo(v.tipo_veiculo_id);
+      await adicionarCaminhao(obraId, {
+        nome:              v.nome,
+        placa:             v.placa || null,
+        tipo_veiculo_id:   v.tipo_veiculo_id,
+        tipo_veiculo_nome: v.tipo_veiculo_nome || tipo?.nome || '',
+        tipo_veiculo_tag:  v.tipo_veiculo_tag  || tipo?.tag  || '',
+        qtd_pneus_tipo:    v.qtd_pneus_tipo    || tipo?.qtd_pneus || 0,
+        posicoes:          v.posicoes          || tipo?.posicoes  || [],
+        // referência ao veículo da frota
+        frota_veiculo_id:  v.id,
+      });
     }
 
     mostrarToast('Obra criada com sucesso! ✓', 'success');
-    setTimeout(() => {
-      window.location.href = `obra.html?id=${obraId}`;
-    }, 800);
+    setTimeout(() => { window.location.href = `obra.html?id=${obraId}`; }, 800);
 
   } catch (err) {
     console.error('Erro ao criar obra:', err);
@@ -193,23 +253,20 @@ formNovaObra.addEventListener('submit', async (e) => {
 });
 
 // ─── Helpers ──────────────────────────────────
-
 function setCarregando(estado) {
   btnCriar.disabled = estado;
-  btnCriar.querySelector('.btn-text').style.display   = estado ? 'none' : 'flex';
-  btnCriar.querySelector('.btn-loader').style.display = estado ? 'flex' : 'none';
+  btnCriar.querySelector('.btn-text').style.display   = estado ? 'none'  : 'flex';
+  btnCriar.querySelector('.btn-loader').style.display = estado ? 'flex'  : 'none';
 }
 
 function mostrarToast(msg, tipo = 'success') {
   const toast    = document.getElementById('toast');
   const toastMsg = document.getElementById('toastMsg');
   const icon     = toast.querySelector('.toast-icon');
-
   toast.className      = `toast ${tipo}`;
   toastMsg.textContent = msg;
   icon.textContent     = tipo === 'success' ? '✓' : '✕';
   toast.style.display  = 'flex';
-
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 4000);
 }

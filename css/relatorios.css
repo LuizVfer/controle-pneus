@@ -541,3 +541,444 @@
   .rel-header-logo { display: none; }
   .page-title { font-size: 28px; }
 }
+
+/* ═══════════════════════════════════════════════
+   ATUALIZAÇÕES v2 — veículos, cobertura, histórico cards
+═══════════════════════════════════════════════ */
+
+/* Tag do tipo de veículo na tabela */
+.rel-veiculo-tag {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+.td-sub {
+  font-size: 11px;
+  color: var(--texto-muted);
+  margin-top: 2px;
+}
+
+/* Barra de cobertura */
+.cobertura-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+}
+.cobertura-bar-wrap {
+  flex: 1;
+  height: 5px;
+  background: var(--borda);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cobertura-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.cobertura-pct {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-muted);
+  white-space: nowrap;
+}
+.cobertura-pct.completo { color: #4CAF50; }
+
+/* KPI cor vermelho */
+.kpi-value.vermelho { color: var(--erro, #dc3545); }
+
+/* Inventário melhorado */
+.pneu-inv-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--borda);
+  background: var(--superficie);
+  animation: fadeInUp 0.2s ease both;
+}
+.pneu-inv-icone svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.pneu-inv-item.em_uso .pneu-inv-icone   { color: var(--accent); }
+.pneu-inv-item.disponivel .pneu-inv-icone { color: var(--texto-muted); }
+.pneu-inv-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.pneu-inv-numero {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto);
+}
+.pneu-inv-status {
+  font-size: 11px;
+  font-weight: 600;
+}
+.pneu-inv-item.em_uso   .pneu-inv-status { color: var(--accent); }
+.pneu-inv-item.disponivel .pneu-inv-status { color: var(--texto-muted); }
+.pneu-inv-caminhao {
+  font-size: 11px;
+  color: var(--texto-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Filtros de tipo no histórico do relatório */
+.rel-hist-filtros {
+  display: flex;
+  gap: 4px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 3px;
+  width: fit-content;
+  margin-bottom: 16px;
+}
+.hist-tipo-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--texto-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.hist-tipo-btn.active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+}
+.hist-tipo-btn:not(.active):hover {
+  background: var(--hover);
+  color: var(--texto);
+}
+
+/* Cards do histórico — reutilizados do obra.css */
+.rel-hist-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rel-hist-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px;
+  color: var(--texto-muted);
+  font-size: 14px;
+}
+.rel-hist-empty svg { width: 40px; height: 40px; opacity: 0.25; }
+
+.btn-mais-hist {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px;
+  background: var(--superficie);
+  border: 1px dashed var(--borda);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-family: var(--font-body);
+}
+.btn-mais-hist:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+/* Cards compartilhados (hcard) — definição base caso obra.css não seja importado */
+.hcard {
+  display: flex;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  background: var(--superficie);
+  overflow: hidden;
+  transition: transform 0.12s, box-shadow 0.12s;
+  animation: fadeInUp 0.22s ease both;
+}
+.hcard:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.hcard-stripe { width: 4px; flex-shrink: 0; }
+.card-add   .hcard-stripe { background: #4CAF50; }
+.card-rem   .hcard-stripe { background: var(--erro, #dc3545); }
+.card-troca .hcard-stripe { background: var(--accent); }
+.hcard-body { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.hcard-top  { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.hcard-left { display: flex; flex-direction: column; gap: 6px; }
+.hcard-veiculo { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--texto); }
+.hcard-veiculo svg { opacity: 0.5; flex-shrink: 0; }
+.hcard-right { text-align: right; flex-shrink: 0; }
+.hcard-data { font-size: 13px; font-weight: 600; color: var(--texto); }
+.hcard-hora { font-size: 11px; color: var(--texto-muted); margin-top: 2px; }
+.hcard-pneu-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hcard-pneu-box { display: flex; flex-direction: column; gap: 3px; padding: 10px 16px; border-radius: 8px; min-width: 130px; }
+.hcard-pneu-box.saiu   { background: rgba(220,53,69,0.07); border: 1px solid rgba(220,53,69,0.2); }
+.hcard-pneu-box.entrou { background: rgba(76,175,80,0.07);  border: 1px solid rgba(76,175,80,0.2); }
+.hcard-pneu-dir { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; opacity: 0.6; }
+.hcard-pneu-box.saiu   .hcard-pneu-dir  { color: var(--erro); }
+.hcard-pneu-box.entrou .hcard-pneu-dir  { color: #4CAF50; }
+.hcard-pneu-num { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: 0.5px; }
+.hcard-pneu-box.saiu   .hcard-pneu-num { color: var(--erro); }
+.hcard-pneu-box.entrou .hcard-pneu-num { color: #4CAF50; }
+.hcard-troca-arrow { color: var(--texto-muted); opacity: 0.4; }
+.hcard-troca-arrow svg { width: 20px; height: 20px; }
+.hcard-footer { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--texto-muted); padding-top: 4px; border-top: 1px solid var(--borda-soft, var(--borda)); }
+.hcard-footer svg { opacity: 0.5; flex-shrink: 0; }
+.hist-badge { display: inline-flex; align-items: center; font-family: var(--font-display); font-size: 11px; font-weight: 700; border-radius: 20px; padding: 3px 10px; white-space: nowrap; letter-spacing: 0.3px; }
+.badge-add   { background: rgba(76,175,80,0.15);  color: #4CAF50;           border: 1px solid rgba(76,175,80,0.3); }
+.badge-rem   { background: rgba(220,53,69,0.12);  color: var(--erro);       border: 1px solid rgba(220,53,69,0.25); }
+.badge-troca { background: var(--accent-soft);    color: var(--accent);     border: 1px solid rgba(232,180,0,0.3); }
+
+/* ── Filtros expandidos do histórico ── */
+.rel-hist-filtros-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.rel-hist-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rel-hist-linha.wrap { flex-wrap: wrap; }
+
+.rel-hist-tipo-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  padding: 3px;
+}
+.rel-hist-count {
+  font-size: 12px;
+  color: var(--texto-muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+.rel-hist-busca {
+  flex: 1;
+  min-width: 160px;
+}
+
+/* Corrige lupa e campo de busca (não herda obra.css) */
+.modal-busca-pneu {
+  position: relative;
+}
+.modal-busca-pneu .busca-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--texto-muted);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.modal-busca-pneu .busca-input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto);
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.modal-busca-pneu .busca-input:focus { border-color: var(--accent); }
+.modal-busca-pneu .busca-input::placeholder { color: var(--texto-muted); }
+.rel-hist-select {
+  min-width: 150px;
+  max-width: 200px;
+}
+.rel-hist-periodo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rel-hist-date {
+  padding: 7px 10px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto);
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 130px;
+  cursor: pointer;
+}
+.rel-hist-date:focus { border-color: var(--accent); }
+.rel-hist-date::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
+.rel-hist-ate {
+  font-size: 12px;
+  color: var(--texto-muted);
+  white-space: nowrap;
+}
+.rel-hist-limpar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  background: none;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto-muted);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.rel-hist-limpar:hover {
+  background: rgba(220,53,69,0.08);
+  border-color: var(--erro);
+  color: var(--erro);
+}
+
+/* Selects de filtro (não herda obra.css) */
+.veiculo-tipo-select {
+  padding: 8px 12px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto);
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  appearance: auto;
+}
+.veiculo-tipo-select:focus { border-color: var(--accent); }
+
+/* ── Dropdown customizado (cp-select) ── */
+.cp-select {
+  position: relative;
+  min-width: 160px;
+}
+.cp-select-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto);
+  font-size: 13px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  text-align: left;
+  white-space: nowrap;
+}
+.cp-select-btn:hover,
+.cp-select.aberto .cp-select-btn { border-color: var(--accent); }
+.cp-select.tem-valor .cp-select-btn { border-color: var(--accent); color: var(--accent); }
+.cp-select-btn svg { flex-shrink: 0; opacity: 0.6; transition: transform 0.2s; }
+.cp-select.aberto .cp-select-btn svg { transform: rotate(180deg); }
+
+.cp-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  background: var(--superficie);
+  /* Garante fundo sólido independente do tema */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  z-index: 200;
+  overflow: hidden;
+  animation: fadeInUp 0.12s ease;
+}
+[data-theme="dark"] .cp-select-menu {
+  background: #1e2235;
+}
+[data-theme="light"] .cp-select-menu {
+  background: #ffffff;
+}
+
+.cp-select-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--borda);
+  color: var(--texto-muted);
+}
+.cp-select-search {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  font-family: var(--font-body);
+  color: var(--texto);
+}
+.cp-select-search::placeholder { color: var(--texto-muted); }
+
+.cp-select-options {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.cp-select-opt {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--texto);
+  cursor: pointer;
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+[data-theme="dark"] .cp-select-opt:hover    { background: rgba(255,255,255,0.08); }
+[data-theme="light"] .cp-select-opt:hover   { background: rgba(0,0,0,0.06); }
+.cp-select-opt.selected { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+/* Tag de tipo dentro do card do histórico */
+.hcard-veiculo-tag {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

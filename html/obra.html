@@ -122,13 +122,6 @@
         Caminhões
         <span class="tab-count" id="tabCountCaminhoes">0</span>
       </button>
-      <button class="tab-btn" data-tab="pneus">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
-        </svg>
-        Pneus
-        <span class="tab-count" id="tabCountPneus">0</span>
-      </button>
       <button class="tab-btn" data-tab="historico">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -149,6 +142,17 @@
           Adicionar Caminhão
         </button>
       </div>
+      <!-- Barra de filtro de veículos (injetada pelo JS) -->
+      <div class="veiculo-filter-bar" id="veiculoFilterBar" style="display:none">
+        <div class="modal-busca-pneu frota-busca">
+          <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="veiculoSearch" class="busca-input" placeholder="Buscar por nome ou placa..." />
+        </div>
+        <select id="veiculoTipoFilter" class="select-filter-sm"></select>
+        <span class="veiculo-filter-count" id="veiculoFilterCount"></span>
+      </div>
       <div class="caminhoes-grid" id="caminhoesGrid">
         <div class="state-loading" id="loadingCaminhoes">
           <div class="spinner"></div><p>Carregando...</p>
@@ -156,32 +160,44 @@
       </div>
     </div>
 
-    <!-- ── Tab: Pneus ─────────────────────── -->
-    <div class="tab-panel" id="tabPneus">
-      <div class="tab-toolbar">
-        <div class="pneu-filter-tabs">
-          <button class="pf-btn active" data-pf="todos">Todos</button>
-          <button class="pf-btn" data-pf="disponivel">Disponíveis</button>
-          <button class="pf-btn" data-pf="em_uso">Em uso</button>
-        </div>
-
-      </div>
-      <div class="pneus-lista" id="pneusLista">
-        <div class="state-loading" id="loadingPneus">
-          <div class="spinner"></div><p>Carregando...</p>
-        </div>
-      </div>
-    </div>
-
     <!-- ── Tab: Histórico ─────────────────── -->
     <div class="tab-panel" id="tabHistorico">
-      <div class="tab-toolbar">
-        <span class="tab-info" id="infoHistorico">Registro de todas as trocas</span>
-      </div>
-      <div class="historico-lista" id="historicoLista">
-        <div class="state-loading" id="loadingHistorico">
-          <div class="spinner"></div><p>Carregando...</p>
+
+      <!-- Filtros -->
+      <div class="hist-toolbar">
+        <div class="hist-tipo-tabs">
+          <button class="hist-tipo-btn active" data-tipo="">Todas</button>
+          <button class="hist-tipo-btn" data-tipo="adicao">Adições</button>
+          <button class="hist-tipo-btn" data-tipo="remocao">Remoções</button>
+          <button class="hist-tipo-btn" data-tipo="troca">Trocas</button>
         </div>
+        <div class="hist-toolbar-right">
+          <div class="hist-busca-wrap">
+            <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="historicoBuscaPneu" class="hist-busca-input" placeholder="Buscar pneu ou veículo..." />
+          </div>
+          <span class="hist-count" id="historicoCount"></span>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div class="historico-lista" id="historicoLista">
+        <div class="hist-cards" id="historicoCards"></div>
+
+        <!-- Vazio -->
+        <div class="state-empty" id="historicoEmpty" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+          <h3>Sem registros</h3>
+          <p id="historicoEmptyMsg">Sem movimentações registradas nesta obra.</p>
+        </div>
+
+        <!-- Ver mais -->
+        <button class="btn-mais-hist" id="btnMaisTrocas" style="display:none">Ver mais</button>
       </div>
     </div>
 
@@ -221,9 +237,12 @@
 
   <!-- Modal: Adicionar caminhão -->
   <div class="modal-overlay" id="modalAddCaminhao" style="display:none">
-    <div class="modal modal-sm">
+    <div class="modal modal-frota">
       <div class="modal-header">
-        <h2 class="modal-title">Adicionar Caminhão</h2>
+        <div>
+          <h2 class="modal-title">Adicionar Veículo</h2>
+          <p class="modal-subtitle">Selecione um veículo da frota</p>
+        </div>
         <button class="modal-close" data-modal="modalAddCaminhao">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -231,15 +250,21 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="field-group">
-          <label class="field-label">Nome do Caminhão *</label>
-          <input type="text" id="addCaminhaoNome" class="field-input" placeholder="Ex: Scania R450" maxlength="60" />
-          <span class="field-error" id="addCaminhaoNomeError"></span>
+        <!-- Busca -->
+        <div class="frota-busca-wrap">
+          <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="addCaminhaoSearch" class="field-input" style="padding-left:34px" placeholder="Buscar por nome ou placa..." />
         </div>
-        <div class="field-group">
-          <label class="field-label">Placa <span class="optional">(opcional)</span></label>
-          <input type="text" id="addCaminhaoPlaca" class="field-input" placeholder="Ex: ABC-1234" maxlength="10" />
+        <!-- Loading -->
+        <div id="addCaminhaoLoading" style="display:none" class="frota-modal-loading">
+          <div class="spinner"></div><span>Carregando frota...</span>
         </div>
+        <!-- Lista -->
+        <div id="addCaminhaoLista" class="frota-modal-lista"></div>
+        <!-- Erro seleção -->
+        <span class="field-error" id="addCaminhaoSelectError"></span>
       </div>
       <div class="modal-footer">
         <button class="btn-cancelar" data-modal="modalAddCaminhao">Cancelar</button>
@@ -251,52 +276,7 @@
     </div>
   </div>
 
-
-
-  <!-- Modal: Atribuir / Trocar pneu -->
-  <div class="modal-overlay" id="modalAtribuirPneu" style="display:none">
-    <div class="modal">
-      <div class="modal-header">
-        <div>
-          <h2 class="modal-title" id="modalAtribuirTitle">Atribuir Pneu</h2>
-          <p class="modal-subtitle">Caminhão: <strong id="modalAtribuirCaminhao">—</strong></p>
-        </div>
-        <button class="modal-close" data-modal="modalAtribuirPneu">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body">
-
-        <!-- Busca + Selecionar todos -->
-        <div class="atribuir-modal-toolbar">
-          <div class="atribuir-busca-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input type="text" id="atribuirBusca" placeholder="Buscar por número..." autocomplete="off" />
-          </div>
-          <button id="btnSelecionarTodos" type="button" style="display:none">Selecionar todos</button>
-        </div>
-
-        <div class="field-group">
-          <div class="pneu-select-lista" id="pneuSelectLista"></div>
-          <span class="field-error" id="atribuirPneuError"></span>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-cancelar" data-modal="modalAtribuirPneu">Cancelar</button>
-        <button class="btn-salvar" id="salvarAtribuirPneu">
-          <span class="btn-text">Adicionar</span>
-          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
-        </button>
-      </div>
-    </div>
-  </div>
-
+  <!-- Modal: Adicionar pneu -->
   <!-- Modal: Confirmar finalizar -->
   <div class="modal-overlay" id="modalFinalizar" style="display:none">
     <div class="modal modal-sm">
@@ -400,6 +380,108 @@
     <span class="toast-icon"></span>
     <span id="toastMsg"></span>
   </div>
+
+  <!-- Modal: Atribuir / Trocar pneu na posição -->
+  <div class="modal-overlay" id="modalAtribuirPosicao" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Atribuir Pneu</h2>
+          <p class="modal-subtitle">Posição: <strong id="modalAtribuirPosLabel">—</strong></p>
+        </div>
+        <button class="modal-close" data-modal="modalAtribuirPosicao">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Passo 1: Seletor de estoque -->
+        <div id="obraAtribuirEstoqueStep">
+          <label class="field-label">Selecione o estoque</label>
+          <div class="atribuir-estoques-lista" id="obraAtribuirEstoqueLista"></div>
+          <span class="field-error" id="obraAtribuirEstoqueErr"></span>
+        </div>
+        <!-- Passo 2: Lista de pneus (oculto até selecionar estoque) -->
+        <div id="obraAtribuirPneuStep" style="display:none">
+          <div class="atribuir-estoque-selecionado" id="obraAtribuirEstoqueSelecionado">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span id="obraAtribuirEstoqueNomeLabel">—</span>
+            <button type="button" id="btnObraTrocarEstoque" class="btn-trocar-estoque">trocar</button>
+          </div>
+          <label class="field-label" style="margin-top:4px">Buscar pneu disponível</label>
+          <div class="modal-busca-pneu">
+            <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="buscaPneuPos" class="busca-input" placeholder="Número do pneu ou parte dele..." />
+          </div>
+          <div class="pneu-select-lista" id="pneuPosLista"></div>
+          <span class="field-error" id="atribuirPosError"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalAtribuirPosicao">Cancelar</button>
+        <button class="btn-salvar" id="confirmarAtribuirPos" disabled>
+          <span class="btn-text">Confirmar</span>
+          <span class="btn-loader" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Opções de posição ocupada -->
+  <div class="modal-overlay" id="modalOpcoesPosicao" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Pneu na Posição</h2>
+          <p class="modal-subtitle" id="modalOpcoesVeiculoNome">—</p>
+        </div>
+        <button class="modal-close" data-modal="modalOpcoesPosicao">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="opcoes-pneu-info">
+          <div class="opcoes-pneu-num" id="modalOpcoesPneuNum">—</div>
+          <div class="opcoes-pneu-pos" id="modalOpcoesPosNome">—</div>
+        </div>
+        <div class="opcoes-btns">
+          <button class="btn-opcao trocar" id="btnTrocarPneuPos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+              <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+            </svg>
+            Trocar pneu
+          </button>
+          <button class="btn-opcao remover" id="btnRemoverPneuPos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            </svg>
+            Remover pneu
+          </button>
+          <button class="btn-opcao" id="btnVerPneuEstoque">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            Ver no estoque
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <script type="module" src="../js/theme.js"></script>
   <script type="module" src="../js/obra.js"></script>

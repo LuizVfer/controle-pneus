@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frota — Controle de Pneus</title>
+  <script>
+    (function() {
+      const t = localStorage.getItem('cp-theme');
+      const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t || sys);
+    })();
+  </script>
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/veiculos.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="navbar">
+    <div class="navbar-brand">
+      <a href="dashboard.html" class="back-btn" title="Voltar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </a>
+      <div class="navbar-icon">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="14" stroke="currentColor" stroke-width="4"/>
+          <circle cx="32" cy="32" r="4" fill="currentColor"/>
+          <line x1="32" y1="4"  x2="32" y2="18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="32" y1="46" x2="32" y2="60" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="4"  y1="32" x2="18" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <line x1="46" y1="32" x2="60" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="navbar-title">CONTROLE <strong>DE PNEUS</strong></span>
+    </div>
+    <div class="navbar-right">
+      <button class="theme-toggle" title="Alternar tema">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <div class="user-avatar" id="userAvatar">?</div>
+    </div>
+  </header>
+
+  <!-- Loading inicial -->
+  <div class="page-loading" id="pageLoading">
+    <div class="spinner-lg"></div>
+    <p>Carregando frota...</p>
+  </div>
+
+  <main class="main-content" id="mainContent" style="display:none">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="page-header-info">
+        <h1 class="page-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+            <rect x="1" y="3" width="15" height="13" rx="2"/>
+            <path d="M16 8h4l3 3v5h-7V8z"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+          Frota de Veículos
+        </h1>
+        <p class="page-sub" id="pageSubtitle">Gerencie os pneus de cada veículo da empresa</p>
+      </div>
+      <button class="btn-novo-veiculo" id="btnNovoVeiculo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Novo Veículo
+      </button>
+    </div>
+
+    <!-- Stats rápidos -->
+    <div class="frota-stats" id="frotaStats">
+      <div class="fstat-card">
+        <div class="fstat-icon veiculos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <div class="fstat-info">
+          <span class="fstat-valor" id="statTotalVeiculos">0</span>
+          <span class="fstat-label">Veículos</span>
+        </div>
+      </div>
+      <div class="fstat-card">
+        <div class="fstat-icon pneus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+        </div>
+        <div class="fstat-info">
+          <span class="fstat-valor" id="statPneusEmUso">0</span>
+          <span class="fstat-label">Pneus em uso</span>
+        </div>
+      </div>
+      <div class="fstat-card">
+        <div class="fstat-icon completo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="fstat-info">
+          <span class="fstat-valor" id="statCompletos">0</span>
+          <span class="fstat-label">Completos</span>
+        </div>
+      </div>
+      <div class="fstat-card">
+        <div class="fstat-icon alerta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="fstat-info">
+          <span class="fstat-valor" id="statIncompletos">0</span>
+          <span class="fstat-label">Com posições vazias</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="frota-filtros" id="frotaFiltros" style="display:none">
+      <div class="modal-busca-pneu frota-busca">
+        <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="frotaBusca" class="busca-input" placeholder="Buscar por nome ou placa..." />
+      </div>
+      <!-- Dropdown: Tipo -->
+      <div class="cp-select cp-select-sm" id="cpFiltroTipo">
+        <button class="cp-select-btn" type="button">
+          <span class="cp-select-label">Todos os tipos</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="cp-select-menu" style="display:none">
+          <div class="cp-select-options" id="cpFiltroTipoOpts"></div>
+        </div>
+      </div>
+      <!-- Dropdown: Status -->
+      <div class="cp-select cp-select-sm" id="cpFiltroStatus">
+        <button class="cp-select-btn" type="button">
+          <span class="cp-select-label">Todos</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="cp-select-menu" style="display:none">
+          <div class="cp-select-options" id="cpFiltroStatusOpts"></div>
+        </div>
+      </div>
+      <span class="frota-count" id="frotaCount"></span>
+    </div>
+
+    <!-- Grid de veículos -->
+    <div class="frota-grid" id="frotaGrid">
+      <div class="state-loading" id="loadingVeiculos">
+        <div class="spinner"></div><p>Carregando...</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══ MODAIS ══════════════════════════════════════ -->
+
+  <!-- Modal: Novo / Editar veículo -->
+  <div class="modal-overlay" id="modalNovoVeiculo" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalNovoVeiculoTitulo">Novo Veículo</h2>
+        <button class="modal-close" data-modal="modalNovoVeiculo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-group">
+          <label class="field-label">Tipo do Veículo *</label>
+          <div class="cp-select" id="cpSelectTipoVeiculo">
+            <button class="cp-select-btn" type="button" id="novoVeiculoTipoBtn">
+              <span class="cp-select-label">— Selecione o tipo —</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="cp-select-menu" style="display:none">
+              <div class="cp-select-search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="cp-select-search" type="text" placeholder="Buscar tipo..." />
+              </div>
+              <div class="cp-select-options" id="cpSelectTipoOpts"></div>
+            </div>
+          </div>
+          <input type="hidden" id="novoVeiculoTipo" value="" />
+          <span class="field-error" id="novoVeiculoTipoErr"></span>
+        </div>
+        <div class="tipo-info-box" id="novoVeiculoInfoBox" style="display:none">
+          <span class="tipo-tag" id="novoVeiculoInfoTag"></span>
+          <span class="tipo-pneus-count" id="novoVeiculoInfoPneus"></span>
+          <span class="tipo-descricao" id="novoVeiculoInfoDesc"></span>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Identificação *</label>
+          <input type="text" id="novoVeiculoNome" class="field-input" placeholder="Ex: SCANIA R450" maxlength="60" />
+          <span class="field-error" id="novoVeiculoNomeErr"></span>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Placa <span class="optional">(opcional)</span></label>
+          <input type="text" id="novoVeiculoPlaca" class="field-input" placeholder="Ex: ABC-1234" maxlength="10" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalNovoVeiculo">Cancelar</button>
+        <button class="btn-salvar" id="salvarNovoVeiculo">
+          <span class="btn-text">Salvar</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Atribuir pneu à posição -->
+  <div class="modal-overlay" id="modalAtribuirPos" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title" id="modalAtribuirTitulo">Atribuir Pneu</h2>
+          <p class="modal-subtitle">Posição: <strong id="modalAtribuirPosLabel">—</strong></p>
+        </div>
+        <button class="modal-close" data-modal="modalAtribuirPos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Passo 1: Seletor de estoque -->
+        <div id="atribuirEstoqueStep">
+          <label class="field-label">Selecione o estoque</label>
+          <div class="atribuir-estoques-lista" id="atribuirEstoqueLista"></div>
+          <span class="field-error" id="atribuirEstoqueErr"></span>
+        </div>
+
+        <!-- Passo 2: Busca e lista de pneus (oculto até selecionar estoque) -->
+        <div id="atribuirPneuStep" style="display:none">
+          <div class="atribuir-estoque-selecionado" id="atribuirEstoqueSelecionado">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span id="atribuirEstoqueNomeLabel">—</span>
+            <button type="button" id="btnTrocarEstoque" class="btn-trocar-estoque">trocar</button>
+          </div>
+          <label class="field-label" style="margin-top:4px">Buscar pneu disponível</label>
+          <div class="modal-busca-pneu">
+            <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="buscaPneuFrota" class="busca-input" placeholder="Número do pneu ou parte dele..." />
+          </div>
+          <div class="pneu-select-lista" id="pneuFrotaLista"></div>
+          <span class="field-error" id="atribuirPosErr"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalAtribuirPos">Cancelar</button>
+        <button class="btn-salvar" id="confirmarAtribuirFrota" disabled>
+          <span class="btn-text">Confirmar</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Opções da posição ocupada -->
+  <div class="modal-overlay" id="modalOpcoesPos" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Pneu na Posição</h2>
+          <p class="modal-subtitle" id="modalOpcoesVeiculoNome">—</p>
+        </div>
+        <button class="modal-close" data-modal="modalOpcoesPos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="opcoes-pneu-info">
+          <div class="opcoes-pneu-num" id="modalOpcoesPneuNum">—</div>
+          <div class="opcoes-pneu-pos" id="modalOpcoesPosNome">—</div>
+        </div>
+        <div class="opcoes-btns">
+          <button class="btn-opcao trocar" id="btnTrocarFrota">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Trocar pneu
+          </button>
+          <button class="btn-opcao remover" id="btnRemoverFrota">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Remover pneu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Deletar veículo -->
+  <div class="modal-overlay" id="modalDeletarVeiculo" style="display:none">
+    <div class="modal modal-sm modal-danger">
+      <div class="modal-header">
+        <h2 class="modal-title" style="color:var(--erro)">Remover Veículo</h2>
+        <button class="modal-close" data-modal="modalDeletarVeiculo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-body">
+          <div class="confirm-icon danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </div>
+          <p>Remover o veículo <strong id="deletarVeiculoNome">—</strong>?</p>
+          <p class="confirm-hint">Todos os pneus atribuídos serão liberados para o estoque.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" data-modal="modalDeletarVeiculo">Cancelar</button>
+        <button class="btn-danger" id="confirmarDeletarVeiculo">
+          <span class="btn-text">Remover</span>
+          <span class="btn-loader" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Histórico do veículo -->
+  <div class="modal-overlay" id="modalHistoricoFrota" style="display:none">
+    <div class="modal modal-hist">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Histórico</h2>
+          <p class="modal-subtitle" id="modalHistNome">—</p>
+        </div>
+        <button class="modal-close" data-modal="modalHistoricoFrota">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <!-- Filtro tipo -->
+      <div class="hist-modal-filtros">
+        <button class="hist-tipo-btn active" data-tipo="">Todas</button>
+        <button class="hist-tipo-btn" data-tipo="adicao">Adições</button>
+        <button class="hist-tipo-btn" data-tipo="remocao">Remoções</button>
+        <button class="hist-tipo-btn" data-tipo="troca">Trocas</button>
+        <span class="hist-modal-count" id="histModalCount"></span>
+      </div>
+      <div class="modal-body hist-modal-body">
+        <div class="hist-cards-wrap" id="histModalCards">
+          <div class="hist-loading">
+            <div class="spinner"></div>
+            <p>Carregando histórico...</p>
+          </div>
+        </div>
+        <button class="btn-mais-hist" id="btnMaisHistModal" style="display:none">Ver mais</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" style="display:none">
+    <span class="toast-icon"></span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script type="module" src="../js/theme.js"></script>
+  <script type="module" src="../js/veiculos.js"></script>
+</body>
+</html>
