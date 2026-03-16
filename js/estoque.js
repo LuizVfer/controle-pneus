@@ -10,6 +10,7 @@ import {
   inutilizarPneu, reativarPneu,
   transferirPneuEstoque,
   enviarParaRecapagem, receberDeRecapagem,
+  atualizarCondicaoPneu,
 } from './firebase.js';
 
 // ─── Estado ─────────────────────────────────
@@ -364,6 +365,12 @@ function criarCardPneu(p, idx) {
     em_recapagem:  'Em Recapagem',
   }[p.status] || p.status;
 
+  // Badge condição
+  const condicao = p.condicao || 'novo';
+  const condicaoCfg = { novo: { label: 'Novo', cls: 'condicao-novo' }, medio: { label: 'Médio', cls: 'condicao-medio' }, ruim: { label: 'Ruim', cls: 'condicao-ruim' } };
+  const cc = condicaoCfg[condicao] || condicaoCfg.novo;
+  const condicaoHtml = `<span class="badge-condicao ${cc.cls}">${cc.label}</span>`;
+
   // Badge recapado
   const recapadoHtml = p.qtd_recapagens > 0 ? `
     <div class="badge-recapado">
@@ -473,6 +480,7 @@ function criarCardPneu(p, idx) {
         </svg>
       </div>
       <span class="status-badge">${statusLabel}</span>
+      ${condicaoHtml}
     </div>
     <div class="pneu-numero">${p.numero_identificacao}</div>
     ${recapadoHtml}
@@ -496,6 +504,7 @@ function criarCardPneu(p, idx) {
     card.querySelector('.transferir')?.addEventListener('click', () => abrirModalTransferir(p));
     card.querySelector('.recapar')?.addEventListener('click',    () => abrirModalRecapar(p));
     card.querySelector('.recebido')?.addEventListener('click',   () => abrirModalRecebido(p));
+    card.querySelector('.badge-condicao')?.addEventListener('click', () => abrirModalCondicao(p));
   }
 
   return card;
@@ -847,6 +856,36 @@ document.getElementById('confirmarRecebido').addEventListener('click', async () 
     setLoadingBtn(btn, false, 'Confirmar');
     pneuAlvo = null;
   }
+});
+
+// ─── Modal: Condição do pneu ─────────────────
+function abrirModalCondicao(p) {
+  pneuAlvo = p;
+  document.getElementById('condicaoPneuNum').textContent = p.numero_identificacao;
+  const condicaoAtual = p.condicao || 'novo';
+  document.querySelectorAll('#modalCondicao .btn-condicao').forEach(btn => {
+    btn.classList.toggle('ativo', btn.dataset.condicao === condicaoAtual);
+  });
+  abrirModal('modalCondicao');
+}
+
+document.querySelectorAll('#modalCondicao .btn-condicao').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    if (!pneuAlvo) return;
+    btn.disabled = true;
+    try {
+      await atualizarCondicaoPneu(pneuAlvo.id, btn.dataset.condicao);
+      fecharModal('modalCondicao');
+      mostrarToast(`Condição atualizada para ${btn.querySelector('.condicao-label').textContent}! ✓`, 'success');
+      await carregarTudo();
+    } catch (err) {
+      console.error(err);
+      mostrarToast('Erro ao atualizar condição.', 'error');
+    } finally {
+      btn.disabled = false;
+      pneuAlvo = null;
+    }
+  });
 });
 
 // ─── Fechar modais ───────────────────────────

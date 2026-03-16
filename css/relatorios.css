@@ -982,3 +982,8 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+/* ─── Histórico: veículo adicionado/removido ── */
+.card-veiculo-add .hcard-stripe { background: var(--azul); }
+.card-veiculo-rem .hcard-stripe { background: var(--texto-muted); }
+.badge-veiculo-add { background: var(--azul-soft);  color: var(--azul);       border: 1px solid rgba(59,158,255,0.3); }
+.badge-veiculo-rem { background: var(--cinza-soft); color: var(--texto-muted); border: 1px solid var(--borda); }

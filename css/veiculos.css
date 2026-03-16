@@ -563,8 +563,13 @@
 .pneu-select-item:last-child { border-bottom: none; }
 .pneu-select-item:hover { background: var(--hover); }
 .pneu-select-item.selected { background: var(--accent-soft); }
-.pneu-select-icone svg { width: 18px; height: 18px; color: var(--texto-muted); flex-shrink: 0; }
-.pneu-select-item.selected .pneu-select-icone svg { color: var(--accent); }
+.pneu-select-icone {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--verde-soft); color: var(--verde);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.pneu-select-icone svg { width: 15px; height: 15px; }
+.pneu-select-item.selected .pneu-select-icone { background: var(--accent-soft); color: var(--accent); }
 .pneu-select-num { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--texto); flex: 1; }
 .pneu-select-check { display: none; color: var(--accent); }
 .pneu-select-check svg { width: 16px; height: 16px; }
@@ -1211,3 +1216,47 @@
   transition: color 0.15s;
 }
 .btn-trocar-estoque:hover { color: var(--texto); }
+/* ─── Pneu select: info com badges ─────────── */
+.pneu-select-info {
+  flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;
+}
+.pneu-select-badges {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.pneu-select-info .pneu-select-num { flex: unset; }
+.pneu-select-recapado {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.4px; padding: 2px 7px; border-radius: 100px;
+  background: var(--azul-soft); color: var(--azul); white-space: nowrap;
+}
+.badge-condicao {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 2px 7px; border-radius: 100px; white-space: nowrap;
+}
+.badge-condicao.condicao-novo  { background: var(--verde-soft);  color: var(--verde); }
+.badge-condicao.condicao-medio { background: var(--accent-soft); color: var(--accent); }
+.badge-condicao.condicao-ruim  { background: var(--erro-soft);   color: var(--erro); }
+
+/* ─── Modal opções: badges de condição ──────── */
+.opcoes-pneu-badges {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+}
+
+/* ─── Diagrama: cores por condição ─────────── */
+.roda.ocupado { border-style: solid; }
+.roda.ocupado.novo    { background: var(--verde);  border-color: var(--verde); }
+.roda.ocupado.novo .roda-num  { color: #fff; }
+.roda.ocupado.novo::before    { background: rgba(0,0,0,0.2); opacity: 1; }
+.roda.ocupado.novo:hover      { background: #1e9e52; box-shadow: 0 3px 12px rgba(39,174,96,0.45); }
+.roda.ocupado.medio   { background: var(--accent); border-color: var(--accent); }
+.roda.ocupado.medio .roda-num { color: #0F1117; }
+.roda.ocupado.medio::before   { background: rgba(0,0,0,0.2); opacity: 1; }
+.roda.ocupado.medio:hover     { background: var(--accent-dark); box-shadow: 0 3px 12px rgba(232,180,0,0.45); }
+.roda.ocupado.ruim    { background: var(--erro);   border-color: var(--erro); }
+.roda.ocupado.ruim .roda-num  { color: #fff; }
+.roda.ocupado.ruim::before    { background: rgba(0,0,0,0.2); opacity: 1; }
+.roda.ocupado.ruim:hover      { background: #c82333; box-shadow: 0 3px 12px rgba(220,53,69,0.45); }
+.roda.ocupado.recapado { background: var(--azul);  border-color: var(--azul); }
+.roda.ocupado.recapado .roda-num  { color: #fff; }
+.roda.ocupado.recapado::before    { background: rgba(0,0,0,0.2); opacity: 1; }
+.roda.ocupado.recapado:hover      { background: #1a7fd4; box-shadow: 0 3px 12px rgba(59,158,255,0.45); }

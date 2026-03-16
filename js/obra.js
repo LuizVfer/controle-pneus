@@ -8,7 +8,7 @@ import {
   deletarCaminhao, listarPneusDisponiveis,
   adicionarPneuAoCaminhao, removerPneuDoCaminhao, trocarPneuNoCaminhao,
   listarTrocas, sincronizarCaminhaoComFrota, listarVeiculosFrota, logout, db,
-  listarEstoques,
+  listarEstoques, listarEstoque,
 } from './firebase.js';
 
 import { TIPOS_VEICULO, getTipoVeiculo } from './veiculos-tipos.js';
@@ -26,7 +26,8 @@ let obra             = null;
 let caminhoes        = [];
 let pneusDisponiveis = [];
 let trocas           = [];
-let estoques         = [];        // estoques por cidade
+let estoques         = [];
+let todosPneus       = []; // todos os pneus (para lookup de condicao no diagrama)        // estoques por cidade
 let estoqueAtribuir  = null;      // estoque selecionado no modal atribuir
 let caminhaoAlvo     = null;
 let posicaoAlvo      = null;
@@ -93,6 +94,7 @@ async function carregarTudo() {
     pneusDisponiveis = await listarPneusDisponiveis();
     trocas           = await listarTrocas(OBRA_ID);
     estoques         = await listarEstoques();
+    todosPneus       = await listarEstoque();
     renderizarHeader();
     renderizarCaminhoes();
     renderizarHistorico();
@@ -110,6 +112,7 @@ async function recarregarDados() {
   obra             = await getObra(OBRA_ID);
   pneusDisponiveis = await listarPneusDisponiveis();
   estoques         = await listarEstoques();
+  todosPneus       = await listarEstoque();
   renderizarHeader();
   renderizarCaminhoes();
   renderizarHistorico();
@@ -240,10 +243,26 @@ function gerarDiagrama(caminhao) {
     const renderRoda = (p) => {
       const temPneu = !!p.pneu_id;
       const numCurto = p.pneu_numero
-        ? p.pneu_numero.split('-').pop()   // pega só os 4 dígitos finais
+        ? p.pneu_numero.split('-').pop()
         : '';
+
+      // Determina classe de cor pela condição do pneu
+      let rodaCls = temPneu ? 'ocupado' : 'vazio';
+      if (temPneu) {
+        const dadosPneu = todosPneus.find(x => x.id === p.pneu_id);
+        if (dadosPneu?.qtd_recapagens > 0) {
+          rodaCls = 'ocupado recapado';
+        } else if (dadosPneu?.condicao === 'ruim') {
+          rodaCls = 'ocupado ruim';
+        } else if (dadosPneu?.condicao === 'medio') {
+          rodaCls = 'ocupado medio';
+        } else {
+          rodaCls = 'ocupado novo';
+        }
+      }
+
       return `<div
-        class="roda ${temPneu ? 'ocupado' : 'vazio'}"
+        class="roda ${rodaCls}"
         data-caminhao-id="${caminhao.id}"
         data-pos-id="${p.id}"
         title="${p.label}${temPneu ? ' — ' + p.pneu_numero : ' — Clique para atribuir pneu'}"
@@ -720,13 +739,30 @@ function popularListaPneus(disponiveis, container, termo) {
     const item = document.createElement('div');
     item.className  = 'pneu-select-item';
     item.dataset.id = p.id;
+
+    // Badge condição
+    const condicao = p.condicao || 'novo';
+    const condicaoCfg = { novo: { label: 'Novo', cls: 'condicao-novo' }, medio: { label: 'Médio', cls: 'condicao-medio' }, ruim: { label: 'Ruim', cls: 'condicao-ruim' } };
+    const cc = condicaoCfg[condicao] || condicaoCfg.novo;
+
+    // Badge recapado
+    const recapadoHtml = p.qtd_recapagens > 0
+      ? `<span class="pneu-select-recapado">Recapado ×${p.qtd_recapagens}</span>`
+      : '';
+
     item.innerHTML  = `
       <div class="pneu-select-icone">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
         </svg>
       </div>
-      <span class="pneu-select-num">${p.numero_identificacao}</span>
+      <div class="pneu-select-info">
+        <span class="pneu-select-num">${p.numero_identificacao}</span>
+        <div class="pneu-select-badges">
+          <span class="badge-condicao ${cc.cls}">${cc.label}</span>
+          ${recapadoHtml}
+        </div>
+      </div>
       <span class="pneu-select-check">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
           <polyline points="20 6 9 17 4 12"/>

@@ -868,20 +868,31 @@
 }
 .roda:hover::before { background: var(--accent); opacity: 0.4; }
 
-.roda.ocupado {
-  border: 2.5px solid var(--accent);
-  background: var(--accent);
-}
-.roda.ocupado::before {
-  background: rgba(0,0,0,0.25);
-  opacity: 1;
-}
-.roda.ocupado:hover {
-  box-shadow: 0 3px 12px rgba(232,180,0,0.45);
-  transform: scale(1.05);
-  z-index: 2;
-  background: var(--accent-dark);
-}
+.roda.ocupado { border-style: solid; }
+
+/* Novo — verde */
+.roda.ocupado.novo { background: var(--verde); border-color: var(--verde); }
+.roda.ocupado.novo .roda-num  { color: #fff; }
+.roda.ocupado.novo::before    { background: rgba(0,0,0,0.2); opacity: 1; }
+.roda.ocupado.novo:hover      { background: #1e9e52; transform: scale(1.05); z-index:2; box-shadow: 0 3px 12px rgba(39,174,96,0.45); }
+
+/* Médio — amarelo */
+.roda.ocupado.medio { background: var(--accent); border-color: var(--accent); }
+.roda.ocupado.medio .roda-num { color: #0F1117; }
+.roda.ocupado.medio::before   { background: rgba(0,0,0,0.2); opacity: 1; }
+.roda.ocupado.medio:hover     { background: var(--accent-dark); transform: scale(1.05); z-index:2; box-shadow: 0 3px 12px rgba(232,180,0,0.45); }
+
+/* Ruim — vermelho */
+.roda.ocupado.ruim { background: var(--erro); border-color: var(--erro); }
+.roda.ocupado.ruim .roda-num  { color: #fff; }
+.roda.ocupado.ruim::before    { background: rgba(0,0,0,0.2); opacity: 1; }
+.roda.ocupado.ruim:hover      { background: #c82333; transform: scale(1.05); z-index:2; box-shadow: 0 3px 12px rgba(220,53,69,0.45); }
+
+/* Recapado — azul */
+.roda.ocupado.recapado { background: var(--azul); border-color: var(--azul); }
+.roda.ocupado.recapado .roda-num  { color: #fff; }
+.roda.ocupado.recapado::before    { background: rgba(0,0,0,0.2); opacity: 1; }
+.roda.ocupado.recapado:hover      { background: #1a7fd4; transform: scale(1.05); z-index:2; box-shadow: 0 3px 12px rgba(59,158,255,0.45); }
 
 /* Ícone + dentro da roda vazia */
 .roda-plus {
@@ -1636,3 +1647,57 @@
   transition: color 0.15s;
 }
 .btn-trocar-estoque:hover { color: var(--texto); }
+/* ─── Pneu select: info com badges ─────────── */
+.pneu-select-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.pneu-select-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pneu-select-recapado {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 100px;
+  background: var(--azul-soft);
+  color: var(--azul);
+  white-space: nowrap;
+}
+.badge-condicao {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+.badge-condicao.condicao-novo  { background: var(--verde-soft);  color: var(--verde); }
+.badge-condicao.condicao-medio { background: var(--accent-soft); color: var(--accent); }
+.badge-condicao.condicao-ruim  { background: var(--erro-soft);   color: var(--erro); }
+
+/* Remove flex:1 do num já que agora está dentro de pneu-select-info */
+.pneu-select-info .pneu-select-num { flex: unset; }
+
+/* ─── Histórico: badges e stripes de veículo ── */
+.badge-veiculo-add {
+  background: var(--azul-soft);
+  color: var(--azul);
+  border: 1px solid rgba(59,158,255,0.3);
+}
+.badge-veiculo-rem {
+  background: var(--cinza-soft);
+  color: var(--texto-muted);
+  border: 1px solid var(--borda);
+}
+.card-veiculo-add .hcard-stripe { background: var(--azul); }
+.card-veiculo-rem .hcard-stripe { background: var(--texto-muted); }

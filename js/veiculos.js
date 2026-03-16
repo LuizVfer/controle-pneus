@@ -8,7 +8,7 @@ import {
   deletarVeiculoFrota, adicionarPneuAoVeiculoFrota,
   removerPneuDoVeiculoFrota, trocarPneuNoVeiculoFrota,
   atualizarPosicaoVeiculoFrota, listarPneusDisponiveis,
-  listarMovimentacoesFrota, listarEstoques,
+  listarMovimentacoesFrota, listarEstoques, listarEstoque,
 } from './firebase.js';
 
 import { TIPOS_VEICULO, getTipoVeiculo } from './veiculos-tipos.js';
@@ -17,6 +17,7 @@ import { TIPOS_VEICULO, getTipoVeiculo } from './veiculos-tipos.js';
 let usuarioLogado    = null;
 let veiculos         = [];
 let pneusDisponiveis = [];
+let todosPneus       = []; // todos os pneus (para lookup de condicao no diagrama)
 let estoques         = []; // estoques por cidade
 let estoqueAtribuir  = null; // estoque selecionado no modal de atribuir
 let veiculoAlvo      = null;
@@ -51,10 +52,11 @@ observarAuth(async (user) => {
 // ─── Carga inicial ─────────────────────────────
 async function carregarTudo() {
   try {
-    [veiculos, pneusDisponiveis, estoques] = await Promise.all([
+    [veiculos, pneusDisponiveis, estoques, todosPneus] = await Promise.all([
       listarVeiculosFrota(),
       listarPneusDisponiveis(),
       listarEstoques(),
+      listarEstoque(),
     ]);
     atualizarStats();
     inicializarFiltros();
@@ -68,10 +70,11 @@ async function carregarTudo() {
 }
 
 async function recarregar() {
-  [veiculos, pneusDisponiveis, estoques] = await Promise.all([
+  [veiculos, pneusDisponiveis, estoques, todosPneus] = await Promise.all([
     listarVeiculosFrota(),
     listarPneusDisponiveis(),
     listarEstoques(),
+    listarEstoque(),
   ]);
   atualizarStats();
   renderizarVeiculosFiltrados();
@@ -345,8 +348,24 @@ function gerarDiagrama(v) {
     const renderRoda = (p) => {
       const temPneu  = !!p.pneu_id;
       const numCurto = p.pneu_numero ? p.pneu_numero.split('-').pop() : '';
+
+      // Determina classe de cor baseada na condição do pneu
+      let rodaCls = temPneu ? 'ocupado' : 'vazio';
+      if (temPneu) {
+        const dadosPneu = todosPneus.find(x => x.id === p.pneu_id);
+        if (dadosPneu?.qtd_recapagens > 0) {
+          rodaCls = 'ocupado recapado';
+        } else if (dadosPneu?.condicao === 'ruim') {
+          rodaCls = 'ocupado ruim';
+        } else if (dadosPneu?.condicao === 'medio') {
+          rodaCls = 'ocupado medio';
+        } else {
+          rodaCls = 'ocupado novo';
+        }
+      }
+
       return `<div
-        class="roda ${temPneu ? 'ocupado' : 'vazio'}"
+        class="roda ${rodaCls}"
         data-veiculo-id="${v.id}"
         data-pos-id="${p.id}"
         title="${p.label}${temPneu ? ' — ' + p.pneu_numero : ' — Clique para atribuir'}"
@@ -686,13 +705,30 @@ function popularListaPneus(disponiveis, termo) {
   filtrados.forEach(p => {
     const item = document.createElement('div');
     item.className = 'pneu-select-item';
+
+    // Badge condição
+    const condicao = p.condicao || 'novo';
+    const condicaoCfg = { novo: { label: 'Novo', cls: 'condicao-novo' }, medio: { label: 'Médio', cls: 'condicao-medio' }, ruim: { label: 'Ruim', cls: 'condicao-ruim' } };
+    const cc = condicaoCfg[condicao] || condicaoCfg.novo;
+
+    // Badge recapado
+    const recapadoHtml = p.qtd_recapagens > 0
+      ? `<span class="pneu-select-recapado">Recapado ×${p.qtd_recapagens}</span>`
+      : '';
+
     item.innerHTML = `
       <div class="pneu-select-icone">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
         </svg>
       </div>
-      <span class="pneu-select-num">${p.numero_identificacao}</span>
+      <div class="pneu-select-info">
+        <span class="pneu-select-num">${p.numero_identificacao}</span>
+        <div class="pneu-select-badges">
+          <span class="badge-condicao ${cc.cls}">${cc.label}</span>
+          ${recapadoHtml}
+        </div>
+      </div>
       <span class="pneu-select-check">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
           <polyline points="20 6 9 17 4 12"/>
@@ -747,6 +783,23 @@ function abrirModalOpcoesPos(veiculo, posicao) {
   document.getElementById('modalOpcoesVeiculoNome').textContent = veiculo.nome;
   document.getElementById('modalOpcoesPneuNum').textContent     = posicao.pneu_numero || '—';
   document.getElementById('modalOpcoesPosNome').textContent     = posicao.label;
+
+  // Badges de condição e recapado
+  const badgesEl = document.getElementById('modalOpcoesBadges');
+  if (badgesEl) {
+    badgesEl.innerHTML = '';
+    const dadosPneu = todosPneus.find(x => x.id === posicao.pneu_id);
+    if (dadosPneu) {
+      const condicao = dadosPneu.condicao || 'novo';
+      const condicaoCfg = { novo: { label: 'Novo', cls: 'condicao-novo' }, medio: { label: 'Médio', cls: 'condicao-medio' }, ruim: { label: 'Ruim', cls: 'condicao-ruim' } };
+      const cc = condicaoCfg[condicao] || condicaoCfg.novo;
+      badgesEl.innerHTML = `<span class="badge-condicao ${cc.cls}">${cc.label}</span>`;
+      if (dadosPneu.qtd_recapagens > 0) {
+        badgesEl.innerHTML += `<span class="pneu-select-recapado">Recapado ×${dadosPneu.qtd_recapagens}</span>`;
+      }
+    }
+  }
+
   abrirModal('modalOpcoesPos');
 }
 

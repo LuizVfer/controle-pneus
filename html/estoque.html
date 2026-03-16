@@ -442,6 +442,49 @@
     </div>
   </div>
 
+  <!-- MODAL: Condição do pneu -->
+  <div class="modal-overlay" id="modalCondicao" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Condição do Pneu</h3>
+          <p class="modal-sub">Pneu: <strong id="condicaoPneuNum">—</strong></p>
+        </div>
+        <button class="modal-close" data-close="modalCondicao">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="field-label" style="margin-bottom:12px">Selecione a condição atual do pneu:</p>
+        <div class="condicao-opcoes">
+          <button class="btn-condicao novo" data-condicao="novo">
+            <span class="condicao-icon">🟢</span>
+            <div class="condicao-texto">
+              <span class="condicao-label">Novo</span>
+              <span class="condicao-desc">Pneu em ótimo estado</span>
+            </div>
+          </button>
+          <button class="btn-condicao medio" data-condicao="medio">
+            <span class="condicao-icon">🟡</span>
+            <div class="condicao-texto">
+              <span class="condicao-label">Médio</span>
+              <span class="condicao-desc">Ainda utilizável, atenção</span>
+            </div>
+          </button>
+          <button class="btn-condicao ruim" data-condicao="ruim">
+            <span class="condicao-icon">🔴</span>
+            <div class="condicao-texto">
+              <span class="condicao-label">Ruim</span>
+              <span class="condicao-desc">Próximo do limite de uso</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
     <script type="module" src="../js/theme.js"></script>
   <script type="module" src="../js/estoque.js"></script>
 </body>

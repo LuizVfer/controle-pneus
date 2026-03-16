@@ -573,6 +573,7 @@ export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null)
   const ref = await addDoc(collection(db, "pneus"), {
     numero_identificacao:  numero,
     status:                "disponivel",
+    condicao:              "novo",
     obra_id_atual:         null,
     caminhao_id:           null,
     motivo_inutilizacao:   null,
@@ -590,6 +591,10 @@ export async function adicionarPneusEmLote(quantidade, estoqueId = null, estoque
     resultados.push(await adicionarPneuEstoque(estoqueId, estoqueNome));
   }
   return resultados;
+}
+
+export async function atualizarCondicaoPneu(pneuId, condicao) {
+  await updateDoc(doc(db, "pneus", pneuId), { condicao });
 }
 
 

@@ -245,6 +245,8 @@ function renderizarRelatorio(obra, caminhoes, pneus, trocas) {
 
 // ─── Cards do histórico ───────────────────────
 function tipoTroca(t) {
+  if (t.tipo_evento === 'veiculo_adicionado') return 'veiculo_add';
+  if (t.tipo_evento === 'veiculo_removido')   return 'veiculo_rem';
   if (!t.pneu_saiu && t.pneu_entrou) return 'adicao';
   if (t.pneu_saiu  && !t.pneu_entrou) return 'remocao';
   return 'troca';
@@ -403,7 +405,7 @@ function aplicarFiltrosHistoricoRel() {
     if (veiculo && t.caminhao_id !== veiculo) return false;
     if (usuario && t.usuario_id !== usuario) return false;
     if (busca) {
-      const hay = [t.pneu_saiu_numero||'', t.pneu_entrou_numero||'', t.caminhao_nome||''].join(' ').toLowerCase();
+      const hay = [t.pneu_saiu_numero||'', t.pneu_entrou_numero||'', t.caminhao_nome||'', t.caminhao_tag||''].join(' ').toLowerCase();
       if (!hay.includes(busca)) return false;
     }
     if (dtIni || dtFim) {
@@ -455,9 +457,11 @@ function renderHistoricoCards() {
   }
 
   const tipoCfg = {
-    adicao:  { cls: 'card-add',   badge: 'badge-add',   label: 'Adição'  },
-    remocao: { cls: 'card-rem',   badge: 'badge-rem',   label: 'Remoção' },
-    troca:   { cls: 'card-troca', badge: 'badge-troca', label: 'Troca'   },
+    adicao:      { cls: 'card-add',         badge: 'badge-add',         label: 'Adição'           },
+    remocao:     { cls: 'card-rem',         badge: 'badge-rem',         label: 'Remoção'          },
+    troca:       { cls: 'card-troca',       badge: 'badge-troca',       label: 'Troca'            },
+    veiculo_add: { cls: 'card-veiculo-add', badge: 'badge-veiculo-add', label: 'Veíc. Adicionado' },
+    veiculo_rem: { cls: 'card-veiculo-rem', badge: 'badge-veiculo-rem', label: 'Veíc. Removido'   },
   };
 
   const inicio = histPagina * HIST_PAGINA;
@@ -465,7 +469,7 @@ function renderHistoricoCards() {
 
   slice.forEach((t, i) => {
     const tipo    = tipoTroca(t);
-    const cfg     = tipoCfg[tipo];
+    const cfg     = tipoCfg[tipo] || tipoCfg.troca;
     const dataObj = t.data?.toDate ? t.data.toDate() : null;
     const dataFmt = dataObj
       ? dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -476,7 +480,15 @@ function renderHistoricoCards() {
     const relativo = dataObj ? tempoRelativo(dataObj) : '';
 
     let pneusHtml = '';
-    if (tipo === 'adicao') {
+    if (tipo === 'veiculo_add' || tipo === 'veiculo_rem') {
+      const tagHtml = t.caminhao_tag ? `<span class="hcard-veiculo-tag" style="margin-right:6px">${t.caminhao_tag}</span>` : '';
+      pneusHtml = `<div class="hcard-pneu-flow">
+        <div class="hcard-pneu-box ${tipo === 'veiculo_add' ? 'entrou' : 'saiu'}" style="flex:1">
+          <span class="hcard-pneu-dir">${tipo === 'veiculo_add' ? 'ADICIONADO' : 'REMOVIDO'}</span>
+          <span class="hcard-pneu-num" style="font-size:14px">${tagHtml}${t.caminhao_nome || '—'}</span>
+        </div>
+      </div>`;
+    } else if (tipo === 'adicao') {
       pneusHtml = `<div class="hcard-pneu-flow">
         <div class="hcard-pneu-box entrou">
           <span class="hcard-pneu-dir">ENTROU</span>
