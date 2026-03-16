@@ -1557,3 +1557,82 @@
   .hist-toolbar-right { margin-left: 0; }
   .hist-busca-input { width: 100%; }
 }
+/* ─── Modal Atribuir: seletor de estoque ─────── */
+.atribuir-estoques-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.atribuir-estoque-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+  background: var(--card);
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.atribuir-estoque-item:hover:not(.sem-pneus) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.atribuir-estoque-item.sem-pneus {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.atribuir-estoque-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.atribuir-estoque-nome {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+}
+.atribuir-estoque-qtd {
+  font-size: 12px;
+  color: var(--texto-muted);
+}
+.atribuir-estoque-arrow {
+  color: var(--texto-muted);
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.atribuir-estoque-item:hover:not(.sem-pneus) .atribuir-estoque-arrow {
+  color: var(--accent);
+}
+.atribuir-estoque-selecionado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.atribuir-estoque-selecionado svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.btn-trocar-estoque {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-muted);
+  text-decoration: underline;
+  padding: 0;
+  transition: color 0.15s;
+}
+.btn-trocar-estoque:hover { color: var(--texto); }
