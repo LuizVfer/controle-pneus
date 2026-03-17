@@ -987,3 +987,243 @@
 .card-veiculo-rem .hcard-stripe { background: var(--texto-muted); }
 .badge-veiculo-add { background: var(--azul-soft);  color: var(--azul);       border: 1px solid rgba(59,158,255,0.3); }
 .badge-veiculo-rem { background: var(--cinza-soft); color: var(--texto-muted); border: 1px solid var(--borda); }
+
+/* ═══════════════════════════════════════════════
+   INVENTÁRIO v3 — Condição, Marca, Recapado,
+                   Inutilizados
+═══════════════════════════════════════════════ */
+
+/* ─── Card de inventário refatorado ──────────── */
+.pneu-inv-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--cinza-soft);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  min-width: 180px;
+  max-width: 260px;
+  flex: 1 1 180px;
+  transition: border-color var(--transition);
+  animation: fadeUp 0.25s ease both;
+}
+.pneu-inv-item.em_uso {
+  border-color: var(--accent-glow);
+  background: var(--accent-soft);
+}
+.pneu-inv-item.inutilizavel {
+  border-color: rgba(224,85,85,0.25);
+  background: var(--erro-soft);
+  opacity: 0.85;
+}
+
+.pneu-inv-icone {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.pneu-inv-icone svg { width: 18px; height: 18px; }
+.pneu-inv-item.em_uso       .pneu-inv-icone { color: var(--accent); }
+.pneu-inv-item.disponivel   .pneu-inv-icone { color: var(--texto-muted); }
+.pneu-inv-item.inutilizavel .pneu-inv-icone { color: var(--erro); }
+
+.pneu-inv-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Linha topo: número + status */
+.pneu-inv-topo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pneu-inv-numero {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--texto);
+  line-height: 1;
+}
+.pneu-inv-status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.pneu-inv-item.em_uso       .pneu-inv-status { color: var(--accent); }
+.pneu-inv-item.disponivel   .pneu-inv-status { color: var(--verde); }
+.pneu-inv-item.inutilizavel .pneu-inv-status { color: var(--erro); }
+
+/* Linha de badges */
+.pneu-inv-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 18px;
+}
+
+/* Badge condição */
+.inv-badge-condicao {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 100px;
+}
+.inv-cond-novo {
+  background: var(--verde-soft);
+  color: var(--verde);
+  border: 1px solid rgba(39,174,96,0.3);
+}
+.inv-cond-medio {
+  background: rgba(232,180,0,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(232,180,0,0.3);
+}
+.inv-cond-ruim {
+  background: var(--erro-soft);
+  color: var(--erro);
+  border: 1px solid rgba(224,85,85,0.3);
+}
+
+/* Badge marca */
+.inv-badge-marca {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 100px;
+  background: var(--azul-soft);
+  color: var(--azul);
+  border: 1px solid rgba(59,158,255,0.25);
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badge recapado */
+.inv-badge-recapado {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 100px;
+  background: var(--cinza-soft);
+  color: var(--texto-sub);
+  border: 1px solid var(--borda-light);
+  white-space: nowrap;
+}
+
+/* Caminhão/posição */
+.pneu-inv-caminhao {
+  font-size: 11px;
+  color: var(--texto-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* Motivo de inutilização */
+.pneu-inv-motivo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--erro);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.pneu-inv-motivo svg { flex-shrink: 0; color: var(--erro); }
+
+/* ─── Separador de seção dentro do inventário ── */
+.inv-separador {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+.inv-sep-linha {
+  flex: 1;
+  height: 1px;
+  background: var(--erro-soft);
+  border-radius: 1px;
+}
+.inv-sep-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--erro);
+  white-space: nowrap;
+}
+.inv-sep-label svg { color: var(--erro); flex-shrink: 0; }
+
+/* ─── KPI — Condição ─────────────────────────── */
+.kpi-condicao .kpi-label { margin-bottom: 6px; }
+.kpi-cond-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.kpi-cond-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  line-height: 1;
+}
+.kpi-cond-badge small {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.7;
+  letter-spacing: 0.3px;
+}
+.cond-novo  { background: var(--verde-soft);              color: var(--verde); }
+.cond-medio { background: rgba(232,180,0,0.12);           color: var(--accent); }
+.cond-ruim  { background: var(--erro-soft);               color: var(--erro); }
+
+/* ─── Card histórico — motivo de remoção ──────── */
+.hcard-motivo {
+  font-size: 11px;
+  color: var(--erro);
+  opacity: 0.8;
+  align-self: center;
+  font-style: italic;
+}
+
+/* ─── Print — novos elementos ─────────────────── */
+@media print {
+  .inv-badge-condicao,
+  .inv-badge-marca,
+  .inv-badge-recapado {
+    border: 1px solid #ccc;
+    background: #f5f5f5 !important;
+    color: #333 !important;
+  }
+  .inv-separador .inv-sep-linha { background: #ddd; }
+  .inv-sep-label { color: #555; }
+  .kpi-cond-badge { background: #f5f5f5 !important; color: #333 !important; }
+}

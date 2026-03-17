@@ -10,7 +10,8 @@ import {
   inutilizarPneu, reativarPneu,
   transferirPneuEstoque,
   enviarParaRecapagem, receberDeRecapagem,
-  atualizarCondicaoPneu,
+  atualizarCondicaoPneu, atualizarMarcaPneu,
+  listarMarcas, criarMarca, editarMarca, deletarMarca,
 } from './firebase.js';
 
 // ─── Estado ─────────────────────────────────
@@ -19,8 +20,15 @@ let todosEstoques    = [];
 let todosPneus       = [];
 let estoqueAtivo     = null;
 let filtroStatus     = 'todos';
+let filtroMarca      = '';
 let buscaAtiva       = '';
 let pneuAlvo         = null;
+let todasMarcas      = [];
+let toastTimer       = null;
+
+// ─── Paginação ───────────────────────────────
+const PNEUS_POR_PAGINA = 24;
+let paginaAtual        = 1;
 
 // ─── Estado: seleção múltipla ────────────────
 let modoSelecao       = false;
@@ -213,9 +221,10 @@ observarAuth(async (user) => {
 async function carregarTudo() {
   mostrarEstado('loading');
   try {
-    [todosEstoques, todosPneus] = await Promise.all([
+    [todosEstoques, todosPneus, todasMarcas] = await Promise.all([
       listarEstoques(),
       listarEstoque(),
+      listarMarcas(),
     ]);
     renderizarTabs();
     atualizarKpis();
@@ -246,6 +255,20 @@ function renderizarTabs() {
   btnNovo.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Novo`;
   btnNovo.addEventListener('click', () => abrirModalNovoEstoque());
   estoquesTabs.appendChild(btnNovo);
+
+  // Popular select de filtro por marca
+  const sel = document.getElementById('selectFiltroMarca');
+  if (sel) {
+    const valorAtual = sel.value;
+    sel.innerHTML = '<option value="">Todas as marcas</option>';
+    todasMarcas.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.nome;
+      if (m.id === valorAtual) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
 }
 
 function criarTabBtn(estoque, label, qtd) {
@@ -259,7 +282,9 @@ function criarTabBtn(estoque, label, qtd) {
   btn.addEventListener('click', () => {
     estoqueAtivo = estoque;
     filtroStatus = 'todos';
+    filtroMarca  = '';
     buscaAtiva   = '';
+    paginaAtual  = 1;
     searchInput.value = '';
     pneusSelecionados.clear();
     atualizarBarra();
@@ -310,14 +335,18 @@ function renderizarGrade() {
   let lista = pneusDoEstoqueAtivo();
 
   if (filtroStatus !== 'todos') lista = lista.filter(p => p.status === filtroStatus);
+  if (filtroMarca)              lista = lista.filter(p => p.marca_id === filtroMarca);
   if (buscaAtiva) {
     const q = buscaAtiva.toLowerCase();
     lista = lista.filter(p => p.numero_identificacao?.toLowerCase().includes(q));
   }
 
+  const pagEl = document.getElementById('paginacao');
+
   if (lista.length === 0) {
     pneusGrid.style.display  = 'none';
     stateEmpty.style.display = 'flex';
+    if (pagEl) pagEl.style.display = 'none';
     if (buscaAtiva) {
       emptyTitle.textContent = 'Nenhum resultado';
       emptyMsg.textContent   = `Nenhum pneu encontrado para "${buscaAtiva}".`;
@@ -334,12 +363,70 @@ function renderizarGrade() {
     return;
   }
 
+  // Paginação
+  const totalPaginas = Math.ceil(lista.length / PNEUS_POR_PAGINA);
+  if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+  const inicio = (paginaAtual - 1) * PNEUS_POR_PAGINA;
+  const slice  = lista.slice(inicio, inicio + PNEUS_POR_PAGINA);
+
   stateEmpty.style.display = 'none';
   pneusGrid.style.display  = 'grid';
   pneusGrid.innerHTML      = '';
-  lista.forEach((p, idx) => pneusGrid.appendChild(criarCardPneu(p, idx)));
+  slice.forEach((p, idx) => pneusGrid.appendChild(criarCardPneu(p, idx)));
 
+  renderizarPaginacao(totalPaginas, lista.length);
   if (modoSelecao) atualizarBarra();
+}
+
+function renderizarPaginacao(totalPaginas, totalItens) {
+  const el = document.getElementById('paginacao');
+  if (!el) return;
+  if (totalPaginas <= 1) { el.style.display = 'none'; return; }
+
+  el.style.display = 'flex';
+  el.innerHTML = '';
+
+  const inicio = (paginaAtual - 1) * PNEUS_POR_PAGINA + 1;
+  const fim    = Math.min(paginaAtual * PNEUS_POR_PAGINA, totalItens);
+  const info   = document.createElement('span');
+  info.className   = 'pag-info';
+  info.textContent = `${inicio}–${fim} de ${totalItens}`;
+  el.appendChild(info);
+
+  const btnAnt = document.createElement('button');
+  btnAnt.className = 'pag-btn';
+  btnAnt.disabled  = paginaAtual === 1;
+  btnAnt.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>`;
+  btnAnt.addEventListener('click', () => { paginaAtual--; renderizarGrade(); window.scrollTo(0,0); });
+  el.appendChild(btnAnt);
+
+  calcularPaginas(paginaAtual, totalPaginas).forEach(p => {
+    if (p === '...') {
+      const sep = document.createElement('span');
+      sep.className = 'pag-sep'; sep.textContent = '…';
+      el.appendChild(sep);
+    } else {
+      const btn = document.createElement('button');
+      btn.className   = `pag-btn${p === paginaAtual ? ' ativo' : ''}`;
+      btn.textContent = p;
+      btn.addEventListener('click', () => { paginaAtual = p; renderizarGrade(); window.scrollTo(0,0); });
+      el.appendChild(btn);
+    }
+  });
+
+  const btnProx = document.createElement('button');
+  btnProx.className = 'pag-btn';
+  btnProx.disabled  = paginaAtual === totalPaginas;
+  btnProx.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>`;
+  btnProx.addEventListener('click', () => { paginaAtual++; renderizarGrade(); window.scrollTo(0,0); });
+  el.appendChild(btnProx);
+}
+
+function calcularPaginas(atual, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  if (atual <= 4) return [1, 2, 3, 4, 5, '...', total];
+  if (atual >= total - 3) return [1, '...', total-4, total-3, total-2, total-1, total];
+  return [1, '...', atual-1, atual, atual+1, '...', total];
 }
 
 // ─── Card de pneu ────────────────────────────
@@ -483,6 +570,7 @@ function criarCardPneu(p, idx) {
       ${condicaoHtml}
     </div>
     <div class="pneu-numero">${p.numero_identificacao}</div>
+    ${p.marca_nome ? `<div class="pneu-marca-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>${p.marca_nome}</div>` : `<div class="pneu-marca-chip sem-marca" title="Clique para definir a marca">Sem marca</div>`}
     ${recapadoHtml}
     ${p.estoque_nome ? `<div class="pneu-estoque-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${p.estoque_nome}</div>` : ''}
     ${infoExtra ? `<div class="pneu-card-info">${infoExtra}</div>` : ''}
@@ -505,6 +593,7 @@ function criarCardPneu(p, idx) {
     card.querySelector('.recapar')?.addEventListener('click',    () => abrirModalRecapar(p));
     card.querySelector('.recebido')?.addEventListener('click',   () => abrirModalRecebido(p));
     card.querySelector('.badge-condicao')?.addEventListener('click', () => abrirModalCondicao(p));
+  card.querySelector('.pneu-marca-chip')?.addEventListener('click', () => abrirModalTrocarMarca(p));
   }
 
   return card;
@@ -516,12 +605,20 @@ document.querySelectorAll('.ftab').forEach(btn => {
     document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     filtroStatus = btn.dataset.filtro;
+    paginaAtual  = 1;
     renderizarGrade();
   });
 });
 
 searchInput.addEventListener('input', () => {
-  buscaAtiva = searchInput.value.trim();
+  buscaAtiva  = searchInput.value.trim();
+  paginaAtual = 1;
+  renderizarGrade();
+});
+
+document.getElementById('selectFiltroMarca').addEventListener('change', (e) => {
+  filtroMarca = e.target.value;
+  paginaAtual = 1;
   renderizarGrade();
 });
 
@@ -541,18 +638,20 @@ document.getElementById('salvarNovoEstoque').addEventListener('click', async () 
   }
   const btn = document.getElementById('salvarNovoEstoque');
   setLoadingBtn(btn, true, 'Criando...');
+  let criouOk = false;
   try {
     const id = await criarEstoque(nome, usuarioLogado.uid, usuarioLogado.nome);
+    criouOk = true;
     fecharModal('modalNovoEstoque');
     mostrarToast(`Estoque "${nome}" criado! ✓`, 'success');
     estoqueAtivo = { id, nome };
-    await carregarTudo();
   } catch (err) {
     console.error(err);
     mostrarToast('Erro ao criar estoque.', 'error');
   } finally {
     setLoadingBtn(btn, false, 'Criar');
   }
+  if (criouOk) await carregarTudo();
 });
 
 // ─── Modal: Deletar estoque ──────────────────
@@ -606,24 +705,50 @@ qtdInput.addEventListener('input', atualizarHint);
 document.getElementById('btnAddEstoque').addEventListener('click', () => {
   qtdInput.value = 1;
   atualizarHint();
+
+  // Popular select de marcas
+  const select = document.getElementById('selectMarcaAdd');
+  const errEl  = document.getElementById('marcaAddError');
+  select.innerHTML = '<option value="">— Selecione a marca —</option>';
+  errEl.textContent = '';
+  todasMarcas.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value       = m.id;
+    opt.textContent = m.nome;
+    select.appendChild(opt);
+  });
+
   abrirModal('modalAddEstoque');
 });
 
 document.getElementById('salvarAddEstoque').addEventListener('click', async () => {
-  const qtd = Math.max(1, Math.min(200, parseInt(qtdInput.value) || 1));
+  const qtd    = Math.max(1, Math.min(200, parseInt(qtdInput.value) || 1));
+  const select = document.getElementById('selectMarcaAdd');
+  const errEl  = document.getElementById('marcaAddError');
+  const marcaId = select.value;
+
+  if (!marcaId) {
+    errEl.textContent = 'Selecione a marca do pneu.';
+    return;
+  }
+  errEl.textContent = '';
+  const marcaNome = todasMarcas.find(m => m.id === marcaId)?.nome || null;
+
   const btn = document.getElementById('salvarAddEstoque');
   setLoadingBtn(btn, true, `Adicionando ${qtd}...`);
+  let criouOk = false;
   try {
-    await adicionarPneusEmLote(qtd, estoqueAtivo?.id || null, estoqueAtivo?.nome || null);
+    await adicionarPneusEmLote(qtd, estoqueAtivo?.id || null, estoqueAtivo?.nome || null, marcaId, marcaNome);
+    criouOk = true;
     fecharModal('modalAddEstoque');
     mostrarToast(`${qtd} pneu(s) adicionado(s)! ✓`, 'success');
-    await carregarTudo();
   } catch (err) {
-    console.error(err);
+    console.error('Erro ao criar pneus:', err);
     mostrarToast('Erro ao adicionar pneus.', 'error');
   } finally {
     setLoadingBtn(btn, false, 'Confirmar');
   }
+  if (criouOk) await carregarTudo();
 });
 
 // ─── Modal: Transferir — preenchimento da lista ──
@@ -888,14 +1013,159 @@ document.querySelectorAll('#modalCondicao .btn-condicao').forEach(btn => {
   });
 });
 
-// ─── Fechar modais ───────────────────────────
-document.querySelectorAll('[data-close]').forEach(btn => {
-  btn.addEventListener('click', () => fecharModal(btn.dataset.close));
-});
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) fecharModal(overlay.id);
+// ─── Modal: Trocar marca do pneu ─────────────
+function abrirModalTrocarMarca(p) {
+  pneuAlvo = p;
+  document.getElementById('trocarMarcaPneuNum').textContent = p.numero_identificacao;
+
+  const select = document.getElementById('selectTrocarMarca');
+  select.innerHTML = '<option value="">— Selecione a marca —</option>';
+  todasMarcas.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value       = m.id;
+    opt.textContent = m.nome;
+    if (m.id === p.marca_id) opt.selected = true;
+    select.appendChild(opt);
   });
+
+  document.getElementById('trocarMarcaError').textContent = '';
+  abrirModal('modalTrocarMarca');
+}
+
+document.getElementById('confirmarTrocarMarca').addEventListener('click', async () => {
+  const select  = document.getElementById('selectTrocarMarca');
+  const errEl   = document.getElementById('trocarMarcaError');
+  const marcaId = select.value;
+
+  if (!marcaId) { errEl.textContent = 'Selecione a marca.'; return; }
+  const marcaNome = todasMarcas.find(m => m.id === marcaId)?.nome || null;
+
+  const btn = document.getElementById('confirmarTrocarMarca');
+  setLoadingBtn(btn, true, 'Salvando...');
+  let marcaOk = false;
+  try {
+    await atualizarMarcaPneu(pneuAlvo.id, marcaId, marcaNome);
+    marcaOk = true;
+    fecharModal('modalTrocarMarca');
+    mostrarToast(`Marca atualizada para ${marcaNome}! ✓`, 'success');
+  } catch (err) {
+    console.error(err);
+    mostrarToast('Erro ao atualizar marca.', 'error');
+  } finally {
+    setLoadingBtn(btn, false, 'Salvar');
+    pneuAlvo = null;
+  }
+  if (marcaOk) await carregarTudo();
+});
+
+// ─── Modal: Marcas ───────────────────────────
+document.getElementById('btnMarcas')?.addEventListener('click', () => {
+  renderizarListaMarcas();
+  abrirModal('modalMarcas');
+});
+
+function renderizarListaMarcas() {
+  const lista = document.getElementById('marcasLista');
+  lista.innerHTML = '';
+
+  if (todasMarcas.length === 0) {
+    lista.innerHTML = '<p class="sem-pneus">Nenhuma marca cadastrada.</p>';
+    return;
+  }
+
+  todasMarcas.forEach(m => {
+    const item = document.createElement('div');
+    item.className = 'marca-item';
+    item.innerHTML = `
+      <span class="marca-nome" id="marca-nome-${m.id}">${m.nome}</span>
+      <div class="marca-acoes">
+        <button class="marca-btn-editar" data-id="${m.id}" title="Editar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button class="marca-btn-deletar" data-id="${m.id}" data-nome="${m.nome}" title="Deletar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+          </svg>
+        </button>
+      </div>`;
+
+    item.querySelector('.marca-btn-editar').addEventListener('click', () => {
+      const nomeEl = document.getElementById(`marca-nome-${m.id}`);
+      const nomeAtual = nomeEl.textContent;
+      nomeEl.innerHTML = `
+        <input class="marca-input-editar" id="marca-edit-${m.id}" value="${nomeAtual}" />
+        <button class="marca-btn-salvar" data-id="${m.id}">Salvar</button>
+        <button class="marca-btn-cancelar-edit">Cancelar</button>`;
+      document.getElementById(`marca-edit-${m.id}`).focus();
+      nomeEl.querySelector('.marca-btn-salvar').addEventListener('click', async () => {
+        const novoNome = document.getElementById(`marca-edit-${m.id}`).value.trim().toUpperCase();
+        if (!novoNome) return;
+        try {
+          await editarMarca(m.id, novoNome);
+          todasMarcas = await listarMarcas();
+          renderizarListaMarcas();
+          mostrarToast('Marca atualizada! ✓', 'success');
+        } catch (err) { mostrarToast('Erro ao editar marca.', 'error'); }
+      });
+      nomeEl.querySelector('.marca-btn-cancelar-edit').addEventListener('click', () => renderizarListaMarcas());
+    });
+
+    item.querySelector('.marca-btn-deletar').addEventListener('click', async () => {
+      if (!confirm(`Deletar a marca "${m.nome}"?`)) return;
+      try {
+        await deletarMarca(m.id);
+        todasMarcas = await listarMarcas();
+        renderizarListaMarcas();
+        mostrarToast(`Marca "${m.nome}" deletada.`, 'info');
+      } catch (err) { mostrarToast('Erro ao deletar marca.', 'error'); }
+    });
+
+    lista.appendChild(item);
+  });
+}
+
+document.getElementById('salvarNovaMarca').addEventListener('click', async () => {
+  const input = document.getElementById('novaMarcaNome');
+  const errEl = document.getElementById('novaMarcaError');
+  const nome = input.value.trim().toUpperCase();
+  if (!nome) { errEl.textContent = 'Informe o nome da marca.'; return; }
+  if (todasMarcas.some(m => m.nome.toLowerCase() === nome.toLowerCase())) {
+    errEl.textContent = 'Já existe uma marca com esse nome.'; return;
+  }
+  const btn = document.getElementById('salvarNovaMarca');
+  setLoadingBtn(btn, true, 'Salvando...');
+  try {
+    await criarMarca(nome, usuarioLogado.uid, usuarioLogado.nome);
+    todasMarcas = await listarMarcas();
+    input.value = '';
+    errEl.textContent = '';
+    renderizarListaMarcas();
+    mostrarToast(`Marca "${nome}" criada! ✓`, 'success');
+  } catch (err) {
+    mostrarToast('Erro ao criar marca.', 'error');
+  } finally {
+    setLoadingBtn(btn, false, 'Adicionar');
+  }
+});
+
+// ─── Fechar modais ───────────────────────────
+document.addEventListener('click', (e) => {
+  // Verifica se clicou num botão [data-close] ou dentro dele
+  const closeBtn = e.target.closest('[data-close]');
+  if (closeBtn) {
+    e.stopPropagation();
+    fecharModal(closeBtn.dataset.close);
+    return;
+  }
+  // Verifica se clicou no fundo do overlay (fora do modal)
+  if (e.target.classList.contains('modal-overlay')) {
+    fecharModal(e.target.id);
+  }
 });
 
 // ─── Helpers ─────────────────────────────────
@@ -908,7 +1178,6 @@ function mostrarEstado(estado) {
 function abrirModal(id)  { document.getElementById(id).style.display = 'flex'; }
 function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-let toastTimer = null;
 function mostrarToast(msg, tipo = 'success') {
   const toast = document.getElementById('toast');
   toast.textContent = msg;

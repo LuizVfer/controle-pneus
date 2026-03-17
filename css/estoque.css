@@ -191,6 +191,19 @@
   animation: fadeUp 0.35s 0.1s ease both;
 }
 .filter-tabs { display: flex; gap: 4px; }
+.filter-bar-right {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.filtro-marca-select {
+  height: 36px; padding: 0 10px;
+  background: var(--input-bg); border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 13px; color: var(--texto);
+  cursor: pointer; outline: none; transition: border-color 0.15s;
+  min-width: 150px;
+}
+.filtro-marca-select:focus { border-color: var(--accent); }
+.filtro-marca-select option { background: var(--card); color: var(--texto); }
 .ftab {
   padding: 7px 14px; border-radius: var(--radius-sm);
   background: none; border: 1px solid transparent;
@@ -372,7 +385,7 @@
   transition: all var(--transition);
 }
 .modal-close:hover { background: var(--cinza-soft); color: var(--texto); }
-.modal-close svg { width: 14px; height: 14px; }
+.modal-close svg { width: 14px; height: 14px; pointer-events: none; }
 
 .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
 .modal-footer {
@@ -558,7 +571,9 @@
   .btn-add-estoque { width: 100%; justify-content: center; }
   .btn-secondary#btnSelecionar { width: 100%; justify-content: center; }
   .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-bar-right { width: 100%; }
   .search-wrap { width: 100%; }
+  .filtro-marca-select { width: 100%; }
   .motivo-grid { grid-template-columns: 1fr 1fr; }
   .kpi-row { grid-template-columns: 1fr 1fr; }
   .pneus-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
@@ -740,3 +755,164 @@
 .condicao-texto { display: flex; flex-direction: column; gap: 2px; }
 .condicao-label { font-size: 14px; font-weight: 700; color: var(--texto); font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.5px; }
 .condicao-desc  { font-size: 12px; color: var(--texto-muted); }
+/* ─── Chip de marca no card ──────────────────── */
+.pneu-marca-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  background: var(--cinza-soft);
+  border: 1px solid var(--borda);
+  border-radius: 100px;
+  padding: 2px 8px;
+  margin-top: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: fit-content;
+}
+.pneu-marca-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pneu-marca-chip.sem-marca {
+  color: var(--texto-muted);
+  border-style: dashed;
+  font-style: italic;
+}
+.pneu-marca-chip.sem-marca:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  border-style: solid;
+  font-style: normal;
+}
+
+/* ─── Modal Marcas ───────────────────────────── */
+.nova-marca-wrap { margin-bottom: 20px; }
+.nova-marca-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.nova-marca-input-group .field-input { 
+  flex: 1;
+  text-transform: uppercase; 
+}
+.marcas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.marca-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  background: var(--card);
+  border: 1.5px solid var(--borda);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.15s;
+}
+.marca-item:hover { border-color: var(--borda-light); }
+.marca-nome {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.marca-acoes { display: flex; gap: 6px; flex-shrink: 0; }
+.marca-btn-editar,
+.marca-btn-deletar {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--borda);
+  background: var(--cinza-soft);
+  color: var(--texto-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.marca-btn-editar:hover  { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.marca-btn-deletar:hover { border-color: var(--erro); color: var(--erro); background: var(--erro-soft); }
+.marca-btn-editar svg,
+.marca-btn-deletar svg { width: 13px; height: 13px; }
+.marca-input-editar {
+  flex: 1; padding: 5px 10px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--texto);
+  font-family: var(--font-body); font-size: 13px;
+  outline: none; min-width: 0;
+  text-transform: uppercase;
+}
+.marca-btn-salvar {
+  padding: 5px 12px;
+  background: var(--accent); border: none;
+  border-radius: var(--radius-sm);
+  color: #0F1117;
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+}
+.marca-btn-cancelar-edit {
+  padding: 5px 10px; background: none;
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  color: var(--texto-muted); font-size: 12px;
+  cursor: pointer; white-space: nowrap;
+}
+/* ─── Paginação ──────────────────────────────── */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px 0 8px;
+  flex-wrap: wrap;
+}
+.pag-info {
+  font-size: 12px;
+  color: var(--texto-muted);
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.pag-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--borda);
+  background: var(--card);
+  color: var(--texto-sub);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.pag-btn:hover:not(:disabled):not(.ativo) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pag-btn.ativo {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0F1117;
+  font-weight: 700;
+  cursor: default;
+}
+.pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.pag-sep { font-size: 14px; color: var(--texto-muted); padding: 0 4px; line-height: 36px; }

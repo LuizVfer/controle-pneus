@@ -27,10 +27,12 @@ let caminhoes        = [];
 let pneusDisponiveis = [];
 let trocas           = [];
 let estoques         = [];
-let todosPneus       = []; // todos os pneus (para lookup de condicao no diagrama)        // estoques por cidade
+let todosPneus       = []; // todos os pneus (para lookup de condicao no diagrama)
 let estoqueAtribuir  = null;      // estoque selecionado no modal atribuir
 let caminhaoAlvo     = null;
 let posicaoAlvo      = null;
+const PNEUS_MODAL_POR_PAG = 10;
+let paginaModalObra  = 1;
 let pneuSelecionado  = null;
 let modoTroca        = false;
 
@@ -698,15 +700,33 @@ function selecionarEstoqueObra(id, nome) {
   document.getElementById('obraAtribuirPneuStep').style.display       = 'block';
   document.getElementById('obraAtribuirEstoqueNomeLabel').textContent = nome;
 
-  popularListaPneus(disponiveis, document.getElementById('pneuPosLista'), '');
+  // Popular select de marcas
+  const selMarca = document.getElementById('selectMarcaPos');
+  selMarca.innerHTML = '<option value="">Todas as marcas</option>';
+  const marcasPresentes = [...new Set(disponiveis.filter(p => p.marca_id).map(p => JSON.stringify({ id: p.marca_id, nome: p.marca_nome })))]
+    .map(s => JSON.parse(s))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  marcasPresentes.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id; opt.textContent = m.nome;
+    selMarca.appendChild(opt);
+  });
+  selMarca.value = '';
+
+  paginaModalObra = 1;
+  popularListaPneus(disponiveis, document.getElementById('pneuPosLista'), '', '');
 
   const inputBusca = document.getElementById('buscaPneuPos');
-  inputBusca.oninput = () => {
-    const termo = inputBusca.value.trim().toLowerCase();
-    popularListaPneus(disponiveis, document.getElementById('pneuPosLista'), termo);
+  inputBusca.value = '';
+
+  const atualizarFiltro = () => {
+    paginaModalObra = 1;
     pneuSelecionado = null;
     document.getElementById('confirmarAtribuirPos').disabled = true;
+    popularListaPneus(disponiveis, document.getElementById('pneuPosLista'), inputBusca.value.trim().toLowerCase(), selMarca.value);
   };
+  inputBusca.oninput   = atualizarFiltro;
+  selMarca.onchange    = atualizarFiltro;
 }
 
 document.getElementById('btnObraTrocarEstoque').addEventListener('click', () => {
@@ -718,12 +738,19 @@ document.getElementById('btnObraTrocarEstoque').addEventListener('click', () => 
   document.getElementById('buscaPneuPos').value                     = '';
 });
 
-function popularListaPneus(disponiveis, container, termo) {
+function popularListaPneus(disponiveis, container, termo, marcaFiltro = '') {
   container.innerHTML = '';
+  const pagEl = document.getElementById('paginacaoPosObra');
 
-  const filtrados = termo
-    ? disponiveis.filter(p => p.numero_identificacao.toLowerCase().includes(termo))
-    : disponiveis;
+  const filtrados = disponiveis
+    .filter(p => !termo || p.numero_identificacao.toLowerCase().includes(termo))
+    .filter(p => !marcaFiltro || p.marca_id === marcaFiltro)
+    .slice()
+    .sort((a, b) => {
+      const da = a.criado_em?.toDate?.() || new Date(0);
+      const db = b.criado_em?.toDate?.() || new Date(0);
+      return db - da;
+    });
 
   if (filtrados.length === 0) {
     const p = document.createElement('p');
@@ -732,25 +759,28 @@ function popularListaPneus(disponiveis, container, termo) {
       ? 'Nenhum pneu disponível no estoque.'
       : `Nenhum pneu encontrado para "${termo}".`;
     container.appendChild(p);
+    if (pagEl) pagEl.style.display = 'none';
     return;
   }
 
-  filtrados.forEach(p => {
+  const totalPags = Math.ceil(filtrados.length / PNEUS_MODAL_POR_PAG);
+  if (paginaModalObra > totalPags) paginaModalObra = 1;
+  const inicio = (paginaModalObra - 1) * PNEUS_MODAL_POR_PAG;
+  const slice  = filtrados.slice(inicio, inicio + PNEUS_MODAL_POR_PAG);
+
+  slice.forEach(p => {
     const item = document.createElement('div');
     item.className  = 'pneu-select-item';
     item.dataset.id = p.id;
 
-    // Badge condição
     const condicao = p.condicao || 'novo';
     const condicaoCfg = { novo: { label: 'Novo', cls: 'condicao-novo' }, medio: { label: 'Médio', cls: 'condicao-medio' }, ruim: { label: 'Ruim', cls: 'condicao-ruim' } };
     const cc = condicaoCfg[condicao] || condicaoCfg.novo;
-
-    // Badge recapado
     const recapadoHtml = p.qtd_recapagens > 0
       ? `<span class="pneu-select-recapado">Recapado ×${p.qtd_recapagens}</span>`
       : '';
 
-    item.innerHTML  = `
+    item.innerHTML = `
       <div class="pneu-select-icone">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
@@ -758,6 +788,7 @@ function popularListaPneus(disponiveis, container, termo) {
       </div>
       <div class="pneu-select-info">
         <span class="pneu-select-num">${p.numero_identificacao}</span>
+        ${p.marca_nome ? `<span class="pneu-select-marca">${p.marca_nome}</span>` : ''}
         <div class="pneu-select-badges">
           <span class="badge-condicao ${cc.cls}">${cc.label}</span>
           ${recapadoHtml}
@@ -777,6 +808,60 @@ function popularListaPneus(disponiveis, container, termo) {
     });
     container.appendChild(item);
   });
+
+  if (pagEl) {
+    renderizarPaginacaoModal(pagEl, totalPags, paginaModalObra, filtrados, (novaPag) => {
+      paginaModalObra = novaPag;
+      pneuSelecionado = null;
+      document.getElementById('confirmarAtribuirPos').disabled = true;
+      popularListaPneus(disponiveis, container, termo, marcaFiltro);
+    });
+  }
+}
+
+function renderizarPaginacaoModal(el, totalPags, pagAtual, todos, onMudar) {
+  if (totalPags <= 1) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = '';
+
+  const info = document.createElement('span');
+  info.className = 'pag-info';
+  const ini = (pagAtual - 1) * PNEUS_MODAL_POR_PAG + 1;
+  const fim = Math.min(pagAtual * PNEUS_MODAL_POR_PAG, todos.length);
+  info.textContent = `${ini}–${fim} de ${todos.length}`;
+  el.appendChild(info);
+
+  const btnAnt = document.createElement('button');
+  btnAnt.className = 'pag-btn'; btnAnt.disabled = pagAtual === 1;
+  btnAnt.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="15 18 9 12 15 6"/></svg>`;
+  btnAnt.addEventListener('click', () => onMudar(pagAtual - 1));
+  el.appendChild(btnAnt);
+
+  const paginas = totalPags <= 5
+    ? Array.from({ length: totalPags }, (_, i) => i + 1)
+    : pagAtual <= 3 ? [1, 2, 3, 4, '...', totalPags]
+    : pagAtual >= totalPags - 2 ? [1, '...', totalPags-3, totalPags-2, totalPags-1, totalPags]
+    : [1, '...', pagAtual-1, pagAtual, pagAtual+1, '...', totalPags];
+
+  paginas.forEach(p => {
+    if (p === '...') {
+      const sep = document.createElement('span');
+      sep.className = 'pag-sep'; sep.textContent = '…';
+      el.appendChild(sep);
+    } else {
+      const btn = document.createElement('button');
+      btn.className   = `pag-btn${p === pagAtual ? ' ativo' : ''}`;
+      btn.textContent = p;
+      btn.addEventListener('click', () => onMudar(p));
+      el.appendChild(btn);
+    }
+  });
+
+  const btnProx = document.createElement('button');
+  btnProx.className = 'pag-btn'; btnProx.disabled = pagAtual === totalPags;
+  btnProx.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="9 18 15 12 9 6"/></svg>`;
+  btnProx.addEventListener('click', () => onMudar(pagAtual + 1));
+  el.appendChild(btnProx);
 }
 
 document.getElementById('confirmarAtribuirPos').addEventListener('click', async () => {

@@ -63,6 +63,15 @@
         <h1 class="page-title">Estoque de Pneus</h1>
       </div>
       <div class="action-bar-right">
+        <!-- ← adiciona este botão -->
+        <button class="btn-secondary-sm" id="btnMarcas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+            <line x1="7" y1="7" x2="7.01" y2="7"/>
+          </svg>
+          Marcas
+        </button>
+
         <button class="btn-add-estoque" id="btnAddEstoque">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -114,11 +123,16 @@
         <button class="ftab" data-filtro="em_recapagem">Recapagem</button>
         <button class="ftab" data-filtro="inutilizavel">Inutilizáveis</button>
       </div>
-      <div class="search-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por número..." />
+      <div class="filter-bar-right">
+        <select id="selectFiltroMarca" class="filtro-marca-select">
+          <option value="">Todas as marcas</option>
+        </select>
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="searchInput" class="search-input" placeholder="Buscar por número..." />
+        </div>
       </div>
     </div>
 
@@ -130,6 +144,7 @@
 
     <!-- Grade de pneus -->
     <div class="pneus-grid" id="pneusGrid" style="display:none"></div>
+    <div class="paginacao" id="paginacao" style="display:none"></div>
 
     <!-- Estado vazio -->
     <div class="state-empty" id="stateEmpty" style="display:none">
@@ -162,6 +177,11 @@
         </button>
       </div>
       <div class="modal-body">
+        <label class="field-label">Marca do pneu *</label>
+        <select id="selectMarcaAdd" class="field-input" style="margin-bottom:16px">
+          <option value="">— Selecione a marca —</option>
+        </select>
+        <span class="field-error" id="marcaAddError" style="display:block;margin-top:-12px;margin-bottom:12px"></span>
         <label class="field-label">Quantidade de pneus a adicionar</label>
         <div class="qty-control">
           <button class="qty-btn" id="qtyMinus">−</button>
@@ -483,6 +503,75 @@
             </div>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Trocar marca do pneu -->
+  <div class="modal-overlay" id="modalTrocarMarca" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Trocar Marca</h3>
+          <p class="modal-sub">Pneu: <strong id="trocarMarcaPneuNum">—</strong></p>
+        </div>
+        <button class="modal-close" data-close="modalTrocarMarca">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label class="field-label">Selecione a nova marca</label>
+        <select id="selectTrocarMarca" class="field-input" style="margin-top:6px">
+          <option value="">— Selecione a marca —</option>
+        </select>
+        <span class="field-error" id="trocarMarcaError"></span>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary-sm" data-close="modalTrocarMarca">Cancelar</button>
+        <button class="btn-primary-sm" id="confirmarTrocarMarca">
+          <span class="btn-text">Salvar</span>
+          <span class="btn-loader" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Marcas -->
+  <div class="modal-overlay" id="modalMarcas" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Marcas de Pneus</h3>
+          <p class="modal-sub">Gerencie as marcas disponíveis</p>
+        </div>
+        <button class="modal-close" data-close="modalMarcas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="nova-marca-wrap">
+          <div class="nova-marca-input-group">
+            <input type="text" id="novaMarcaNome" class="field-input" placeholder="Nome da marca (ex: Bridgestone)" maxlength="60" />
+            <button class="btn-salvar" id="salvarNovaMarca">
+              <span class="btn-text">Adicionar</span>
+              <span class="btn-loader" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+          <span class="field-error" id="novaMarcaError"></span>
+        </div>
+        <div class="marcas-lista" id="marcasLista"></div>
       </div>
     </div>
   </div>

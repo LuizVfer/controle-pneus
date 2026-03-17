@@ -1,20 +1,25 @@
 // ============================================================
-//  relatorios.js — Tela de relatórios (v2)
+//  relatorios.js — Tela de relatórios (v3)
 // ============================================================
 
 import {
   observarAuth, getDadosUsuario, listarObras,
   getObra, listarCaminhoes, listarPneusDaObra, listarTrocas, logout,
+  db,
 } from './firebase.js';
 
+import {
+  getDoc, doc,
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
 // ─── Estado ───────────────────────────────────
-let usuarioLogado   = null;
-let todasAsObras    = [];
+let usuarioLogado    = null;
+let todasAsObras     = [];
 let trocasCarregadas = [];
 let caminhoesCarregados = [];
-const HIST_PAGINA   = 20;
-let histPagina      = 0;
-let trocasFiltradas = [];
+const HIST_PAGINA    = 20;
+let histPagina       = 0;
+let trocasFiltradas  = [];
 let histFiltros = { tipo: '', busca: '', veiculo: '', dtIni: '', dtFim: '', usuario: '' };
 
 // ─── Elementos ────────────────────────────────
@@ -25,7 +30,7 @@ const emptyState   = document.getElementById('emptyState');
 const loadingState = document.getElementById('loadingState');
 const relatorio    = document.getElementById('relatorio');
 
-// ─── Auth ──────────────────────────────────────
+// ─── Auth ─────────────────────────────────────
 observarAuth(async (user) => {
   if (!user) { window.location.href = 'login.html'; return; }
   usuarioLogado = await getDadosUsuario(user.uid);
@@ -76,9 +81,13 @@ btnGerar.addEventListener('click', async () => {
       listarPneusDaObra(obraId),
       listarTrocas(obraId),
     ]);
+
+    // Busca pneus inutilizados durante esta obra via histórico de trocas
+    const pneusInutilizados = await buscarPneusInutilizados(trocas);
+
     trocasCarregadas    = trocas;
     caminhoesCarregados = caminhoes;
-    renderizarRelatorio(obra, caminhoes, pneus, trocas);
+    renderizarRelatorio(obra, caminhoes, pneus, trocas, pneusInutilizados);
     mostrarEstado('relatorio');
   } catch (err) {
     console.error(err);
@@ -87,8 +96,27 @@ btnGerar.addEventListener('click', async () => {
   }
 });
 
+// ─── Busca pneus inutilizados que passaram pela obra ──
+async function buscarPneusInutilizados(trocas) {
+  // Procura registros de remoção com motivo de inutilização
+  const idsInut = [...new Set(
+    trocas
+      .filter(t => t.motivo_saida?.startsWith('Inutilizado') && t.pneu_saiu)
+      .map(t => t.pneu_saiu)
+  )];
+
+  if (idsInut.length === 0) return [];
+
+  const snaps = await Promise.all(
+    idsInut.map(id => getDoc(doc(db, 'pneus', id)))
+  );
+  return snaps
+    .filter(s => s.exists())
+    .map(s => ({ id: s.id, ...s.data() }));
+}
+
 // ─── Renderização principal ────────────────────
-function renderizarRelatorio(obra, caminhoes, pneus, trocas) {
+function renderizarRelatorio(obra, caminhoes, pneus, trocas, pneusInutilizados = []) {
 
   document.getElementById('relGeradoEm').textContent =
     new Date().toLocaleString('pt-BR');
@@ -103,13 +131,13 @@ function renderizarRelatorio(obra, caminhoes, pneus, trocas) {
   meta.innerHTML = `
     ${metaItem(iconCalendar(), 'Criada em', formatarData(obra.data_criacao))}
     ${obra.data_finalizacao ? metaItem(iconCalendar(), 'Finalizada em', formatarData(obra.data_finalizacao)) : ''}
+    ${obra.status === 'aberta' ? metaItem(iconClock(), 'Aberta há', calcularDuracaoTexto(obra.data_criacao)) : ''}
     ${obra.criado_por_nome  ? metaItem(iconUser(), 'Criada por', obra.criado_por_nome) : ''}
   `;
 
   // ── KPIs ──
-  // Calcula cobertura via posicoes[]
-  let totalPosicoes  = 0;
-  let posOcupadas    = 0;
+  let totalPosicoes = 0;
+  let posOcupadas   = 0;
   caminhoes.forEach(c => {
     const pos = c.posicoes || [];
     totalPosicoes += pos.length;
@@ -118,9 +146,9 @@ function renderizarRelatorio(obra, caminhoes, pneus, trocas) {
   const cobertura = totalPosicoes > 0
     ? Math.round((posOcupadas / totalPosicoes) * 100) : 0;
 
-  const emUso      = pneus.filter(p => p.status === 'em_uso').length;
+  const emUso       = pneus.filter(p => p.status === 'em_uso').length;
   const disponiveis = pneus.filter(p => p.status === 'disponivel').length;
-  const veiCompl   = caminhoes.filter(c => {
+  const veiCompl    = caminhoes.filter(c => {
     const pos = c.posicoes || [];
     return pos.length > 0 && pos.every(p => p.pneu_id);
   }).length;
@@ -129,16 +157,24 @@ function renderizarRelatorio(obra, caminhoes, pneus, trocas) {
   const removidos   = trocas.filter(t => t.pneu_saiu && !t.pneu_entrou).length;
   const trocasReais = trocas.filter(t => t.pneu_saiu && t.pneu_entrou).length;
 
+  // Breakdown de condição (pneus ativos: em_uso + disponivel)
+  const pneusAtivos = pneus.filter(p => p.status === 'em_uso' || p.status === 'disponivel');
+  const qtdNovos  = pneusAtivos.filter(p => p.condicao === 'novo'  || !p.condicao).length;
+  const qtdMedios = pneusAtivos.filter(p => p.condicao === 'medio').length;
+  const qtdRuins  = pneusAtivos.filter(p => p.condicao === 'ruim').length;
+
   document.getElementById('relKpis').innerHTML = `
     ${kpi('Veículos', caminhoes.length, '')}
     ${kpi('Pneus na obra', pneus.length, 'accent')}
     ${kpi('Em uso', emUso, 'accent')}
     ${kpi('Disponíveis', disponiveis, 'verde')}
     ${kpi('Cobertura', cobertura + '%', cobertura === 100 ? 'verde' : 'accent')}
-    ${kpi('Veículos completos', veiCompl + '/' + caminhoes.length, veiCompl === caminhoes.length ? 'verde' : '')}
+    ${kpi('Veíc. completos', veiCompl + '/' + caminhoes.length, veiCompl === caminhoes.length ? 'verde' : '')}
     ${kpi('Adições', adicionados, '')}
     ${kpi('Trocas', trocasReais, '')}
     ${kpi('Remoções', removidos, removidos > 0 ? 'vermelho' : '')}
+    ${kpi('Inutilizados', pneusInutilizados.length, pneusInutilizados.length > 0 ? 'vermelho' : '')}
+    ${kpiCondicao(qtdNovos, qtdMedios, qtdRuins)}
   `;
 
   // ── Tabela de Veículos ──
@@ -150,13 +186,12 @@ function renderizarRelatorio(obra, caminhoes, pneus, trocas) {
     tbody.innerHTML = `<tr><td colspan="6" class="sem-registros">Nenhum veículo cadastrado.</td></tr>`;
   } else {
     caminhoes.forEach((c, i) => {
-      const posicoes    = c.posicoes || [];
-      const totalPos    = posicoes.length;
-      const ocupadas    = posicoes.filter(p => p.pneu_id).length;
-      const pct         = totalPos > 0 ? Math.round((ocupadas / totalPos) * 100) : 0;
-      const completo    = ocupadas === totalPos && totalPos > 0;
+      const posicoes = c.posicoes || [];
+      const totalPos = posicoes.length;
+      const ocupadas = posicoes.filter(p => p.pneu_id).length;
+      const pct      = totalPos > 0 ? Math.round((ocupadas / totalPos) * 100) : 0;
+      const completo = ocupadas === totalPos && totalPos > 0;
 
-      // Chips dos pneus com posição
       const chipsHtml = ocupadas > 0
         ? `<div class="pneu-chips-inline">${posicoes.filter(p => p.pneu_id).map(p =>
             `<span class="pneu-chip-sm" title="${p.label}">
@@ -194,60 +229,153 @@ function renderizarRelatorio(obra, caminhoes, pneus, trocas) {
   }
 
   // ── Inventário de Pneus ──
-  document.getElementById('countPneus').textContent = pneus.length;
+  const totalInventario = pneus.length + pneusInutilizados.length;
+  document.getElementById('countPneus').textContent = totalInventario;
   const inv = document.getElementById('pneusInventory');
   inv.innerHTML = '';
 
-  if (pneus.length === 0) {
+  if (pneus.length === 0 && pneusInutilizados.length === 0) {
     inv.innerHTML = `<p class="sem-registros" style="width:100%">Nenhum pneu cadastrado.</p>`;
   } else {
-    const ordenados = [...pneus].sort((a, b) => {
-      if (a.status === b.status)
-        return a.numero_identificacao.localeCompare(b.numero_identificacao);
-      return a.status === 'em_uso' ? -1 : 1;
-    });
 
-    ordenados.forEach((p, idx) => {
-      const cam = p.status === 'em_uso'
-        ? caminhoes.find(c => (c.pneus_ids || []).includes(p.id))
-        : null;
-      const posLabel = cam
-        ? (cam.posicoes || []).find(x => x.pneu_id === p.id)?.label || ''
-        : '';
+    // ── Pneus ativos (em_uso + disponivel) ──
+    if (pneus.length > 0) {
+      const ordenados = [...pneus].sort((a, b) => {
+        if (a.status === b.status)
+          return a.numero_identificacao.localeCompare(b.numero_identificacao);
+        return a.status === 'em_uso' ? -1 : 1;
+      });
 
-      const el = document.createElement('div');
-      el.className = `pneu-inv-item ${p.status}`;
-      el.style.animationDelay = `${idx * 15}ms`;
-      el.innerHTML = `
-        <div class="pneu-inv-icone">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+      ordenados.forEach((p, idx) => {
+        const cam = p.status === 'em_uso'
+          ? caminhoes.find(c => (c.pneus_ids || []).includes(p.id))
+          : null;
+        const posLabel = cam
+          ? (cam.posicoes || []).find(x => x.pneu_id === p.id)?.label || ''
+          : '';
+
+        inv.appendChild(criarCardInventario(p, cam, posLabel, idx));
+      });
+    }
+
+    // ── Pneus inutilizados durante a obra ──
+    if (pneusInutilizados.length > 0) {
+      // Separador
+      const sep = document.createElement('div');
+      sep.className = 'inv-separador';
+      sep.innerHTML = `
+        <div class="inv-sep-linha"></div>
+        <span class="inv-sep-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
-        </div>
-        <div class="pneu-inv-info">
-          <span class="pneu-inv-numero">${p.numero_identificacao}</span>
-          <span class="pneu-inv-status">${p.status === 'em_uso' ? 'Em uso' : 'Disponível'}</span>
-          ${cam ? `<span class="pneu-inv-caminhao">↳ ${cam.nome}${posLabel ? ' — ' + posLabel : ''}</span>` : ''}
-        </div>`;
-      inv.appendChild(el);
-    });
+          Inutilizados durante a obra (${pneusInutilizados.length})
+        </span>
+        <div class="inv-sep-linha"></div>
+      `;
+      inv.appendChild(sep);
+
+      pneusInutilizados.forEach((p, idx) => {
+        // Busca o motivo no histórico de trocas
+        const trocaInut = trocasCarregadas.find(
+          t => t.pneu_saiu === p.id && t.motivo_saida?.startsWith('Inutilizado')
+        );
+        const motivo = trocaInut
+          ? trocaInut.motivo_saida.replace('Inutilizado: ', '')
+          : (p.motivo_inutilizacao || '—');
+        const camNome = trocaInut?.caminhao_nome || null;
+
+        inv.appendChild(criarCardInutilizado(p, motivo, camNome, idx));
+      });
+    }
   }
 
   // ── Histórico ──
   document.getElementById('countTrocas').textContent = trocas.length;
-
-  // Reset filtros
   histFiltros = { tipo: '', busca: '', veiculo: '', dtIni: '', dtFim: '', usuario: '' };
   histPagina  = 0;
   inicializarFiltrosHistoricoRel(trocas, caminhoes);
   aplicarFiltrosHistoricoRel();
 }
 
+// ─── Card de inventário ativo (em_uso / disponivel) ──
+function criarCardInventario(p, cam, posLabel, idx) {
+  const el = document.createElement('div');
+  el.className = `pneu-inv-item ${p.status}`;
+  el.style.animationDelay = `${idx * 15}ms`;
+
+  const condicao   = p.condicao || 'novo';
+  const condicaoLabel = { novo: 'Novo', medio: 'Médio', ruim: 'Ruim' }[condicao] || 'Novo';
+  const statusLabel   = p.status === 'em_uso' ? 'Em uso' : 'Disponível';
+
+  el.innerHTML = `
+    <div class="pneu-inv-icone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+      </svg>
+    </div>
+    <div class="pneu-inv-info">
+      <div class="pneu-inv-topo">
+        <span class="pneu-inv-numero">${p.numero_identificacao}</span>
+        <span class="pneu-inv-status">${statusLabel}</span>
+      </div>
+      <div class="pneu-inv-badges">
+        <span class="inv-badge-condicao inv-cond-${condicao}">${condicaoLabel}</span>
+        ${p.marca_nome ? `<span class="inv-badge-marca">${p.marca_nome}</span>` : ''}
+        ${p.recapado   ? `<span class="inv-badge-recapado">Recapado${p.qtd_recapagens > 1 ? ' ×' + p.qtd_recapagens : ''}</span>` : ''}
+      </div>
+      ${cam ? `<span class="pneu-inv-caminhao">↳ ${cam.nome}${posLabel ? ' — ' + posLabel : ''}</span>` : ''}
+    </div>`;
+
+  return el;
+}
+
+// ─── Card de pneu inutilizado ─────────────────
+function criarCardInutilizado(p, motivo, camNome, idx) {
+  const el = document.createElement('div');
+  el.className = 'pneu-inv-item inutilizavel';
+  el.style.animationDelay = `${idx * 15}ms`;
+
+  const dataInut = p.data_inutilizacao
+    ? (p.data_inutilizacao.toDate
+        ? p.data_inutilizacao.toDate().toLocaleDateString('pt-BR')
+        : new Date(p.data_inutilizacao).toLocaleDateString('pt-BR'))
+    : null;
+
+  el.innerHTML = `
+    <div class="pneu-inv-icone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+      </svg>
+    </div>
+    <div class="pneu-inv-info">
+      <div class="pneu-inv-topo">
+        <span class="pneu-inv-numero">${p.numero_identificacao}</span>
+        <span class="pneu-inv-status">Inutilizado</span>
+      </div>
+      <div class="pneu-inv-badges">
+        ${p.marca_nome ? `<span class="inv-badge-marca">${p.marca_nome}</span>` : ''}
+        ${p.recapado   ? `<span class="inv-badge-recapado">Recapado${p.qtd_recapagens > 1 ? ' ×' + p.qtd_recapagens : ''}</span>` : ''}
+      </div>
+      <span class="pneu-inv-motivo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+        </svg>
+        ${motivo}${dataInut ? ` — ${dataInut}` : ''}
+      </span>
+      ${camNome ? `<span class="pneu-inv-caminhao">↳ ${camNome}</span>` : ''}
+    </div>`;
+
+  return el;
+}
+
 // ─── Cards do histórico ───────────────────────
 function tipoTroca(t) {
   if (t.tipo_evento === 'veiculo_adicionado') return 'veiculo_add';
   if (t.tipo_evento === 'veiculo_removido')   return 'veiculo_rem';
-  if (!t.pneu_saiu && t.pneu_entrou) return 'adicao';
+  if (!t.pneu_saiu && t.pneu_entrou)  return 'adicao';
   if (t.pneu_saiu  && !t.pneu_entrou) return 'remocao';
   return 'troca';
 }
@@ -262,14 +390,6 @@ function tempoRelativo(date) {
 }
 
 // ─── Dropdown customizado (cp-select) ─────────
-/**
- * Inicializa um dropdown customizado.
- * @param {string} wrapperId  — id do .cp-select
- * @param {string} optsId     — id do .cp-select-options
- * @param {Array}  items      — [{value, label}]
- * @param {string} placeholder
- * @param {function} onChange — chamado com (value)
- */
 function iniciarCpSelect(wrapperId, optsId, items, placeholder, onChange) {
   const wrapper  = document.getElementById(wrapperId);
   const optsEl   = document.getElementById(optsId);
@@ -287,7 +407,6 @@ function iniciarCpSelect(wrapperId, optsId, items, placeholder, onChange) {
     menu.style.display === 'none' ? abrir() : fechar();
   });
 
-  // Fecha ao clicar fora
   document.addEventListener('click', (e) => {
     if (!wrapper.contains(e.target)) fechar();
   });
@@ -329,15 +448,13 @@ function iniciarCpSelect(wrapperId, optsId, items, placeholder, onChange) {
     searchEl.addEventListener('click', e => e.stopPropagation());
   }
 
-  // Expõe reset
-  wrapper._reset = () => selecionar('', placeholder);
+  wrapper._reset    = () => selecionar('', placeholder);
   wrapper._getValor = () => valorAtual;
 
   renderOpts();
 }
 
 function inicializarFiltrosHistoricoRel(trocas, caminhoes) {
-  // Tabs de tipo
   document.querySelectorAll('.hist-tipo-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tipo === '');
     btn.onclick = () => {
@@ -349,41 +466,38 @@ function inicializarFiltrosHistoricoRel(trocas, caminhoes) {
     };
   });
 
-  // Dropdown customizado: veículos
   const veiculoItems = caminhoes.map(c => ({ value: c.id, label: c.nome }));
   iniciarCpSelect('cpSelectVeiculo', 'cpSelectVeiculoOpts', veiculoItems, 'Todos os veículos',
     (val) => { histFiltros.veiculo = val; histPagina = 0; aplicarFiltrosHistoricoRel(); });
 
-  // Dropdown customizado: usuários
   const usuarioItems = [...new Map(
     trocas.filter(t => t.usuario_id).map(t => [t.usuario_id, t.usuario_nome])
   ).entries()].map(([id, nome]) => ({ value: id, label: nome || id }));
   iniciarCpSelect('cpSelectUsuario', 'cpSelectUsuarioOpts', usuarioItems, 'Todos os operadores',
     (val) => { histFiltros.usuario = val; histPagina = 0; aplicarFiltrosHistoricoRel(); });
 
-  // Busca por texto
   const inputBusca = document.getElementById('relHistBusca');
   if (inputBusca) {
-    inputBusca.oninput = () => { histFiltros.busca = inputBusca.value.trim().toLowerCase(); histPagina = 0; aplicarFiltrosHistoricoRel(); };
+    inputBusca.oninput = () => {
+      histFiltros.busca = inputBusca.value.trim().toLowerCase();
+      histPagina = 0;
+      aplicarFiltrosHistoricoRel();
+    };
   }
 
-  // Datas
   const dtIni = document.getElementById('relHistDtIni');
   const dtFim = document.getElementById('relHistDtFim');
   if (dtIni) dtIni.onchange = () => { histFiltros.dtIni = dtIni.value; histPagina = 0; aplicarFiltrosHistoricoRel(); };
   if (dtFim) dtFim.onchange = () => { histFiltros.dtFim = dtFim.value; histPagina = 0; aplicarFiltrosHistoricoRel(); };
 
-  // Botão limpar
   const btnLimpar = document.getElementById('relHistLimpar');
   if (btnLimpar) {
     btnLimpar.onclick = () => {
       histFiltros = { tipo: '', busca: '', veiculo: '', dtIni: '', dtFim: '', usuario: '' };
       histPagina  = 0;
-      if (inputBusca)  inputBusca.value  = '';
-      if (selVeiculo)  selVeiculo.value  = '';
-      if (selUsuario)  selUsuario.value  = '';
-      if (dtIni)       dtIni.value       = '';
-      if (dtFim)       dtFim.value       = '';
+      if (inputBusca) inputBusca.value = '';
+      if (dtIni)      dtIni.value = '';
+      if (dtFim)      dtFim.value = '';
       document.querySelectorAll('.hist-tipo-btn').forEach(b => b.classList.toggle('active', b.dataset.tipo === ''));
       document.getElementById('cpSelectVeiculo')?._reset();
       document.getElementById('cpSelectUsuario')?._reset();
@@ -396,14 +510,13 @@ function aplicarFiltrosHistoricoRel() {
   const { tipo, busca, veiculo, dtIni, dtFim, usuario } = histFiltros;
   const temFiltro = tipo || busca || veiculo || dtIni || dtFim || usuario;
 
-  // Botão limpar
   const btnLimpar = document.getElementById('relHistLimpar');
   if (btnLimpar) btnLimpar.style.display = temFiltro ? 'flex' : 'none';
 
   trocasFiltradas = trocasCarregadas.filter(t => {
-    if (tipo && tipoTroca(t) !== tipo) return false;
+    if (tipo    && tipoTroca(t) !== tipo)     return false;
     if (veiculo && t.caminhao_id !== veiculo) return false;
-    if (usuario && t.usuario_id !== usuario) return false;
+    if (usuario && t.usuario_id !== usuario)  return false;
     if (busca) {
       const hay = [t.pneu_saiu_numero||'', t.pneu_entrou_numero||'', t.caminhao_nome||'', t.caminhao_tag||''].join(' ').toLowerCase();
       if (!hay.includes(busca)) return false;
@@ -418,14 +531,12 @@ function aplicarFiltrosHistoricoRel() {
     return true;
   });
 
-  // Ordena: mais recentes primeiro
   trocasFiltradas.sort((a, b) => {
     const da = a.data?.toDate?.() || new Date(0);
-    const db = b.data?.toDate?.() || new Date(0);
-    return db - da;
+    const db_ = b.data?.toDate?.() || new Date(0);
+    return db_ - da;
   });
 
-  // Contador
   const countEl = document.getElementById('relHistCount');
   if (countEl) {
     countEl.textContent = temFiltro
@@ -496,11 +607,14 @@ function renderHistoricoCards() {
         </div>
       </div>`;
     } else if (tipo === 'remocao') {
+      const motivoHtml = t.motivo_saida
+        ? `<span class="hcard-motivo">${t.motivo_saida}</span>` : '';
       pneusHtml = `<div class="hcard-pneu-flow">
         <div class="hcard-pneu-box saiu">
           <span class="hcard-pneu-dir">SAIU</span>
           <span class="hcard-pneu-num">${t.pneu_saiu_numero || '—'}</span>
         </div>
+        ${motivoHtml}
       </div>`;
     } else {
       pneusHtml = `<div class="hcard-pneu-flow">
@@ -586,6 +700,17 @@ function kpi(label, value, color) {
   </div>`;
 }
 
+function kpiCondicao(novos, medios, ruins) {
+  return `<div class="kpi-item kpi-condicao">
+    <span class="kpi-label">Condição</span>
+    <div class="kpi-cond-row">
+      <span class="kpi-cond-badge cond-novo" title="Novos">${novos} <small>N</small></span>
+      <span class="kpi-cond-badge cond-medio" title="Médios">${medios} <small>M</small></span>
+      <span class="kpi-cond-badge cond-ruim" title="Ruins">${ruins} <small>R</small></span>
+    </div>
+  </div>`;
+}
+
 function metaItem(iconSvg, label, value) {
   return `<span class="rel-meta-item">${iconSvg}${label}: <strong>${value}</strong></span>`;
 }
@@ -594,6 +719,13 @@ function iconCalendar() {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
     <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
     <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>`;
+}
+
+function iconClock() {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
   </svg>`;
 }
 
@@ -611,4 +743,13 @@ function formatarData(ts) {
   if (!ts) return '—';
   const d = ts.toDate ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+function calcularDuracaoTexto(ts) {
+  if (!ts) return '—';
+  const inicio = ts.toDate ? ts.toDate() : new Date(ts);
+  const agora  = new Date();
+  const dias   = Math.floor((agora - inicio) / (1000 * 60 * 60 * 24));
+  if (dias === 0) return 'hoje';
+  return `${dias} dia${dias !== 1 ? 's' : ''}`;
 }

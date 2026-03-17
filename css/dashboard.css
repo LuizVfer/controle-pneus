@@ -2,6 +2,15 @@
    dashboard.css — Dashboard (usa variáveis de theme.css)
    ============================================================ */
 
+/* ─── Layout base ────────────────────────────── */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-footer { margin-top: auto; }
+
 /* ─── Navbar ─────────────────────────────────── */
 .navbar {
   position: sticky; top: 0; z-index: 100;
@@ -82,6 +91,7 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 32px 28px 60px;
+  flex: 1;
 }
 
 /* ─── Barra de ações ─────────────────────────── */
@@ -338,7 +348,7 @@
 
 /* ─── Responsivo ─────────────────────────────── */
 @media (max-width: 768px) {
-  .main-content { padding: 20px 16px 48px; }
+  .main-content { padding: 20px 16px 48px; flex: 1; }
   .navbar { padding: 0 16px; }
   .user-info { display: none; }
   .navbar-title { font-size: 15px; }
@@ -355,7 +365,6 @@
 }
 /* ─── Rodapé ─────────────────────────────────── */
 .app-footer {
-  margin-top: 48px;
   border-top: 1px solid var(--borda);
   background: var(--card);
 }

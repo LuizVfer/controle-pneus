@@ -160,6 +160,19 @@
 .frota-count { font-size: 12px; color: var(--texto-muted); margin-left: auto; white-space: nowrap; }
 
 /* Busca inline */
+.modal-filtros-pneu {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 10px; flex-wrap: wrap;
+}
+.modal-marca-select {
+  height: 38px; padding: 0 10px;
+  background: var(--input-bg); border: 1px solid var(--borda);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 13px; color: var(--texto);
+  cursor: pointer; outline: none; transition: border-color 0.15s;
+  min-width: 130px; flex-shrink: 0;
+}
+.modal-marca-select:focus { border-color: var(--accent); }
 .modal-busca-pneu { position: relative; }
 .modal-busca-pneu .busca-icon {
   position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
@@ -1260,3 +1273,51 @@
 .roda.ocupado.recapado .roda-num  { color: #fff; }
 .roda.ocupado.recapado::before    { background: rgba(0,0,0,0.2); opacity: 1; }
 .roda.ocupado.recapado:hover      { background: #1a7fd4; box-shadow: 0 3px 12px rgba(59,158,255,0.45); }
+/* ─── Paginação nos modais de pneu ──────────── */
+.modal-paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 0 2px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--borda);
+  margin-top: 8px;
+}
+.pag-info {
+  font-size: 11px;
+  color: var(--texto-muted);
+  margin-right: 6px;
+  white-space: nowrap;
+}
+.pag-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--borda);
+  background: var(--card);
+  color: var(--texto-sub);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.pag-btn:hover:not(:disabled):not(.ativo) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pag-btn.ativo {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0F1117;
+  font-weight: 700;
+  cursor: default;
+}
+.pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.pag-sep { font-size: 13px; color: var(--texto-muted); padding: 0 2px; }

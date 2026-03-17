@@ -416,13 +416,19 @@
             <button type="button" id="btnObraTrocarEstoque" class="btn-trocar-estoque">trocar</button>
           </div>
           <label class="field-label" style="margin-top:4px">Buscar pneu disponível</label>
-          <div class="modal-busca-pneu">
-            <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            <input type="text" id="buscaPneuPos" class="busca-input" placeholder="Número do pneu ou parte dele..." />
+          <div class="modal-filtros-pneu">
+            <div class="modal-busca-pneu" style="flex:1">
+              <svg class="busca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" id="buscaPneuPos" class="busca-input" placeholder="Número do pneu ou parte dele..." />
+            </div>
+            <select id="selectMarcaPos" class="modal-marca-select">
+              <option value="">Todas as marcas</option>
+            </select>
           </div>
           <div class="pneu-select-lista" id="pneuPosLista"></div>
+        <div class="modal-paginacao" id="paginacaoPosObra" style="display:none"></div>
           <span class="field-error" id="atribuirPosError"></span>
         </div>
       </div>

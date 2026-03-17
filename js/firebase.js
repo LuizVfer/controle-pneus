@@ -568,12 +568,14 @@ async function _proximoNumeroPneu() {
   return `ALS ${ano}-${String(novoNum).padStart(4, "0")}`;
 }
 
-export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null) {
+export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null, marcaId = null, marcaNome = null) {
   const numero = await _proximoNumeroPneu();
   const ref = await addDoc(collection(db, "pneus"), {
     numero_identificacao:  numero,
     status:                "disponivel",
     condicao:              "novo",
+    marca_id:              marcaId,
+    marca_nome:            marcaNome,
     obra_id_atual:         null,
     caminhao_id:           null,
     motivo_inutilizacao:   null,
@@ -585,12 +587,16 @@ export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null)
   return { id: ref.id, numero_identificacao: numero };
 }
 
-export async function adicionarPneusEmLote(quantidade, estoqueId = null, estoqueNome = null) {
+export async function adicionarPneusEmLote(quantidade, estoqueId = null, estoqueNome = null, marcaId = null, marcaNome = null) {
   const resultados = [];
   for (let i = 0; i < quantidade; i++) {
-    resultados.push(await adicionarPneuEstoque(estoqueId, estoqueNome));
+    resultados.push(await adicionarPneuEstoque(estoqueId, estoqueNome, marcaId, marcaNome));
   }
   return resultados;
+}
+
+export async function atualizarMarcaPneu(pneuId, marcaId, marcaNome) {
+  await updateDoc(doc(db, "pneus", pneuId), { marca_id: marcaId, marca_nome: marcaNome });
 }
 
 export async function atualizarCondicaoPneu(pneuId, condicao) {
@@ -604,8 +610,10 @@ export async function atualizarCondicaoPneu(pneuId, condicao) {
 
 /** Lista todos os estoques */
 export async function listarEstoques() {
-  const snap = await getDocs(query(collection(db, "estoques"), orderBy("nome", "asc")));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const snap = await getDocs(collection(db, "estoques"));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 }
 
 /** Cria um novo estoque de cidade */
@@ -1140,6 +1148,38 @@ export async function listarMovimentacoesFrota(veiculoId) {
     query(collection(db, "veiculos", veiculoId, "movimentacoes"), orderBy("data", "desc"))
   );
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ─────────────────────────────────────────────
+//  MARCAS DE PNEUS
+// ─────────────────────────────────────────────
+
+export async function listarMarcas() {
+  const snap = await getDocs(collection(db, "marcas"));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+export async function criarMarca(nome, usuarioId, usuarioNome) {
+  const ref = await addDoc(collection(db, "marcas"), {
+    nome:            nome.trim(),
+    criado_em:       serverTimestamp(),
+    criado_por:      usuarioId,
+    criado_por_nome: usuarioNome,
+  });
+  return ref.id;
+}
+
+export async function editarMarca(marcaId, novoNome) {
+  await updateDoc(doc(db, "marcas", marcaId), {
+    nome:          novoNome.trim(),
+    atualizado_em: serverTimestamp(),
+  });
+}
+
+export async function deletarMarca(marcaId) {
+  await deleteDoc(doc(db, "marcas", marcaId));
 }
 
 // ─────────────────────────────────────────────

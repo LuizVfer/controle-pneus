@@ -155,6 +155,20 @@ export const TIPOS_VEICULO = [
     ],
   },
 
+  // ── Semi Reboque Carroceria 3 Eixos ────────
+  {
+    id:        'SRC-03',
+    nome:      'Semi Reboque Carroceria',
+    tag:       'SRC',
+    qtd_pneus: 12,
+    descricao: '3 eixos duplos — 4 pneus por eixo (2 cada lado)',
+    posicoes: [
+      ...posEixoDuplo(1),
+      ...posEixoDuplo(2),
+      ...posEixoDuplo(3),
+    ],
+  },
+
   // ── Ônibus ──────────────────────────────────
   {
     id:        'ONS-01',
