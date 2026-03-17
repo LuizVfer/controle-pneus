@@ -353,3 +353,93 @@
   .filter-tabs .tab-btn { padding: 6px 10px; font-size: 12px; }
   .select-filter { font-size: 12px; }
 }
+/* ─── Rodapé ─────────────────────────────────── */
+.app-footer {
+  margin-top: 48px;
+  border-top: 1px solid var(--borda);
+  background: var(--card);
+}
+.app-footer-inner {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 24px 28px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.app-footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.app-footer-img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.app-footer-empresa {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  line-height: 1.3;
+}
+.app-footer-empresa span {
+  font-weight: 400;
+  color: var(--texto-sub);
+  letter-spacing: 0.3px;
+}
+.app-footer-desc {
+  font-size: 12px;
+  color: var(--texto-muted);
+  margin-top: 2px;
+  font-style: italic;
+}
+.app-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.app-footer-versao {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(232,180,0,0.3);
+  border-radius: 4px;
+  padding: 3px 9px;
+  letter-spacing: 0.5px;
+}
+.app-footer-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--borda);
+}
+.app-footer-copy {
+  font-size: 12px;
+  color: var(--texto-muted);
+}
+.app-footer-bottom {
+  border-top: 1px solid var(--borda);
+  text-align: center;
+  padding: 10px 28px;
+  font-size: 11px;
+  color: var(--texto-muted);
+  opacity: 0.5;
+  letter-spacing: 0.3px;
+}
+
+@media (max-width: 640px) {
+  .app-footer-inner  { flex-direction: column; align-items: flex-start; padding: 20px 16px 16px; }
+  .app-footer-right  { flex-wrap: wrap; gap: 10px; }
+  .app-footer-divider { display: none; }
+  .app-footer-copy   { font-size: 11px; }
+  .app-footer-bottom { padding: 10px 16px; }
+}

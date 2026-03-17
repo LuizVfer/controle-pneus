@@ -39,9 +39,9 @@ import {
 
 import { firebaseConfig } from './config.js';
 
-const app = initializeApp(firebaseConfig);
+const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db   = getFirestore(app);
 
 // App secundário — usado APENAS para criar novos usuários
 // sem derrubar a sessão do admin logado
