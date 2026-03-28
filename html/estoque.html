@@ -575,6 +575,52 @@
       </div>
     </div>
   </div>
+  <!-- MODAL: Histórico do pneu -->
+  <div class="modal-overlay" id="modalHistoricoPneu" style="display:none">
+    <div class="modal modal-historico-pneu">
+ 
+      <div class="modal-header">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Histórico do Pneu</h3>
+          <p class="modal-sub">Nº <strong id="histPneuNumero">—</strong></p>
+        </div>
+        <button class="modal-close" data-close="modalHistoricoPneu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+ 
+      <div class="modal-body" style="padding:0">
+ 
+        <!-- Loading -->
+        <div class="hist-pneu-loading" id="histPneuLoading">
+          <div class="spinner"></div>
+          <span>Carregando histórico...</span>
+        </div>
+ 
+        <!-- Vazio -->
+        <div class="hist-pneu-vazio" id="histPneuVazio" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <p>Nenhum registro encontrado.</p>
+        </div>
+ 
+        <!-- Lista de eventos -->
+        <div class="hist-pneu-lista" id="histPneuLista" style="display:none"></div>
+ 
+      </div>
+    </div>
+  </div>
 
     <script type="module" src="../js/theme.js"></script>
   <script type="module" src="../js/estoque.js"></script>

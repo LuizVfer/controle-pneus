@@ -12,6 +12,7 @@ import {
   enviarParaRecapagem, receberDeRecapagem,
   atualizarCondicaoPneu, atualizarMarcaPneu,
   listarMarcas, criarMarca, editarMarca, deletarMarca,
+  listarHistoricoPneu,
 } from './firebase.js';
 
 // ─── Estado ─────────────────────────────────
@@ -572,7 +573,7 @@ function criarCardPneu(p, idx) {
     <div class="pneu-numero">${p.numero_identificacao}</div>
     ${p.marca_nome ? `<div class="pneu-marca-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>${p.marca_nome}</div>` : `<div class="pneu-marca-chip sem-marca" title="Clique para definir a marca">Sem marca</div>`}
     ${recapadoHtml}
-    ${p.estoque_nome ? `<div class="pneu-estoque-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${p.estoque_nome}</div>` : ''}
+    ${(p.estoque_nome || !p.estoque_id) ? `<div class="pneu-estoque-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${p.estoque_nome || 'Campo Grande'}</div>` : ''}
     ${infoExtra ? `<div class="pneu-card-info">${infoExtra}</div>` : ''}
     <div class="pneu-card-actions">${acoesHtml}</div>`;
 
@@ -593,7 +594,11 @@ function criarCardPneu(p, idx) {
     card.querySelector('.recapar')?.addEventListener('click',    () => abrirModalRecapar(p));
     card.querySelector('.recebido')?.addEventListener('click',   () => abrirModalRecebido(p));
     card.querySelector('.badge-condicao')?.addEventListener('click', () => abrirModalCondicao(p));
-  card.querySelector('.pneu-marca-chip')?.addEventListener('click', () => abrirModalTrocarMarca(p));
+    card.querySelector('.pneu-marca-chip')?.addEventListener('click', () => abrirModalTrocarMarca(p));
+    card.querySelector('.pneu-numero')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      abrirModalHistoricoPneu(p);
+    });
   }
 
   return card;
@@ -738,7 +743,7 @@ document.getElementById('salvarAddEstoque').addEventListener('click', async () =
   setLoadingBtn(btn, true, `Adicionando ${qtd}...`);
   let criouOk = false;
   try {
-    await adicionarPneusEmLote(qtd, estoqueAtivo?.id || null, estoqueAtivo?.nome || null, marcaId, marcaNome);
+    await adicionarPneusEmLote(qtd, estoqueAtivo?.id || null, estoqueAtivo?.nome || null, marcaId, marcaNome, usuarioLogado.uid, usuarioLogado.nome);
     criouOk = true;
     fecharModal('modalAddEstoque');
     mostrarToast(`${qtd} pneu(s) adicionado(s)! ✓`, 'success');
@@ -831,7 +836,10 @@ document.getElementById('confirmarTransferir').addEventListener('click', async (
     const total = ids.length;
     setLoadingBtn(btn, true, `Transferindo ${total}...`);
     try {
-      await Promise.all(ids.map(id => transferirPneuEstoque(id, destId, destNomeFirestore)));
+      await Promise.all(ids.map(id => {
+        const pneuRef = todosPneus.find(p => p.id === id);
+        return transferirPneuEstoque(id, destId, destNomeFirestore, usuarioLogado.uid, usuarioLogado.nome, pneuRef?.estoque_id || null, pneuRef?.estoque_nome || 'Campo Grande');
+      }))
       fecharModal('modalTransferir');
       mostrarToast(`${total} pneu${total !== 1 ? 's' : ''} transferido${total !== 1 ? 's' : ''} para ${destNome}! ✓`, 'success');
       cancelarSelecao();
@@ -845,7 +853,7 @@ document.getElementById('confirmarTransferir').addEventListener('click', async (
   } else {
     setLoadingBtn(btn, true, 'Transferindo...');
     try {
-      await transferirPneuEstoque(pneuAlvo.id, destId, destNomeFirestore);
+      await transferirPneuEstoque(pneuAlvo.id, destId, destNomeFirestore, usuarioLogado.uid, usuarioLogado.nome, pneuAlvo.estoque_id || null, pneuAlvo.estoque_nome || 'Campo Grande')
       fecharModal('modalTransferir');
       mostrarToast(`Pneu ${pneuAlvo.numero_identificacao} transferido para ${destNome}! ✓`, 'success');
       await carregarTudo();
@@ -917,7 +925,7 @@ document.getElementById('confirmarReativar').addEventListener('click', async () 
   const btn = document.getElementById('confirmarReativar');
   setLoadingBtn(btn, true, 'Reativando...');
   try {
-    await reativarPneu(pneuAlvo.id);
+    await reativarPneu(pneuAlvo.id, usuarioLogado.uid, usuarioLogado.nome);
     fecharModal('modalReativar');
     mostrarToast(`Pneu ${pneuAlvo.numero_identificacao} reativado! ✓`, 'success');
     await carregarTudo();
@@ -941,7 +949,7 @@ document.getElementById('confirmarRecapar').addEventListener('click', async () =
   const btn = document.getElementById('confirmarRecapar');
   setLoadingBtn(btn, true, 'Enviando...');
   try {
-    await enviarParaRecapagem(pneuAlvo.id);
+    await enviarParaRecapagem(pneuAlvo.id, usuarioLogado.uid, usuarioLogado.nome);
     fecharModal('modalRecapar');
     mostrarToast(`Pneu ${pneuAlvo.numero_identificacao} enviado para recapagem.`, 'info');
     await carregarTudo();
@@ -970,7 +978,7 @@ document.getElementById('confirmarRecebido').addEventListener('click', async () 
   const btn = document.getElementById('confirmarRecebido');
   setLoadingBtn(btn, true, 'Confirmando...');
   try {
-    await receberDeRecapagem(pneuAlvo.id);
+    await receberDeRecapagem(pneuAlvo.id, usuarioLogado.uid, usuarioLogado.nome);
     fecharModal('modalRecebidoRecapagem');
     mostrarToast(`Pneu ${pneuAlvo.numero_identificacao} recapado e disponível! ✓`, 'success');
     await carregarTudo();
@@ -999,7 +1007,7 @@ document.querySelectorAll('#modalCondicao .btn-condicao').forEach(btn => {
     if (!pneuAlvo) return;
     btn.disabled = true;
     try {
-      await atualizarCondicaoPneu(pneuAlvo.id, btn.dataset.condicao);
+      await atualizarCondicaoPneu(pneuAlvo.id, btn.dataset.condicao, usuarioLogado.uid, usuarioLogado.nome, pneuAlvo.condicao || 'novo');
       fecharModal('modalCondicao');
       mostrarToast(`Condição atualizada para ${btn.querySelector('.condicao-label').textContent}! ✓`, 'success');
       await carregarTudo();
@@ -1044,7 +1052,7 @@ document.getElementById('confirmarTrocarMarca').addEventListener('click', async 
   setLoadingBtn(btn, true, 'Salvando...');
   let marcaOk = false;
   try {
-    await atualizarMarcaPneu(pneuAlvo.id, marcaId, marcaNome);
+    await atualizarMarcaPneu(pneuAlvo.id, marcaId, marcaNome, usuarioLogado.uid, usuarioLogado.nome, pneuAlvo.marca_nome || null);
     marcaOk = true;
     fecharModal('modalTrocarMarca');
     mostrarToast(`Marca atualizada para ${marcaNome}! ✓`, 'success');
@@ -1192,4 +1200,171 @@ function setLoadingBtn(btn, loading, loadingText = '') {
   if (t && loadingText) t.textContent = loading ? loadingText : (t.dataset.orig || t.textContent);
   if (t && !t.dataset.orig && loading) t.dataset.orig = t.textContent;
   if (t && !loading && t.dataset.orig) { t.textContent = t.dataset.orig; delete t.dataset.orig; }
+}
+
+// ── Labels amigáveis para cada tipo de evento ────────────
+const HIST_LABELS = {
+  criado:              'Criado',
+  atribuido_obra:      'Atribuído à Obra',
+  removido_obra:       'Removido da Obra',
+  trocado_obra:        'Troca em Obra',
+  atribuido_frota:     'Atribuído à Frota',
+  removido_frota:      'Removido da Frota',
+  transferido:         'Transferido',
+  enviado_recapagem:   'Enviado p/ Recapagem',
+  retornou_recapagem:  'Retornou da Recapagem',
+  inutilizado:         'Inutilizado',
+  reativado:           'Reativado',
+  condicao_alterada:   'Condição Alterada',
+  marca_alterada:      'Marca Alterada',
+};
+ 
+// ── Texto de detalhe por tipo ─────────────────────────────
+function gerarDetalheHistorico(ev) {
+  switch (ev.tipo) {
+    case 'criado':
+      return `Adicionado ao estoque <span>${ev.estoque_nome || 'Campo Grande'}</span>${ev.marca_nova ? ` · <span>${ev.marca_nova}</span>` : ''}`;
+ 
+    case 'atribuido_obra':
+      return `Atribuído ao veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.obra_nome ? ` · Obra: <span>${ev.obra_nome}</span>` : ''}`;
+ 
+    case 'removido_obra':
+      return `Removido do veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.obra_nome ? ` · Obra: <span>${ev.obra_nome}</span>` : ''}`;
+ 
+    case 'trocado_obra':
+      return `${ev.foi_pneu_saiu ? 'Saiu do' : 'Entrou no'} veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.obra_nome ? ` · Obra: <span>${ev.obra_nome}</span>` : ''}`;
+ 
+    case 'atribuido_frota':
+      return `Atribuído ao veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.caminhao_placa ? ` · Placa: <span>${ev.caminhao_placa}</span>` : ''}`;
+ 
+    case 'removido_frota':
+      return `Removido do veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.caminhao_placa ? ` · Placa: <span>${ev.caminhao_placa}</span>` : ''}`;
+ 
+    case 'transferido':
+      return `De <span>${ev.estoque_origem || 'Campo Grande'}</span> → <span>${ev.estoque_destino || 'Campo Grande'}</span>`;
+ 
+    case 'enviado_recapagem':
+      return `Enviado para recapagem`;
+ 
+    case 'retornou_recapagem':
+      return `Retornou da recapagem${ev.qtd_recapagens ? ` · <span>${ev.qtd_recapagens}ª recapagem</span>` : ''}`;
+ 
+    case 'inutilizado':
+      return `Motivo: <span>${ev.motivo || '—'}</span>${ev.caminhao_nome ? ` · Veículo: <span>${ev.caminhao_nome}</span>` : ''}${ev.obra_nome ? ` · Obra: <span>${ev.obra_nome}</span>` : ''}`;
+ 
+    case 'reativado':
+      return `Reativado — voltou ao estoque como disponível`;
+ 
+    case 'condicao_alterada':
+      return `<span>${ev.condicao_anterior || '—'}</span> → <span>${ev.condicao_nova || '—'}</span>`;
+ 
+    case 'marca_alterada':
+      return `<span>${ev.marca_anterior || 'sem marca'}</span> → <span>${ev.marca_nova || '—'}</span>`;
+ 
+    default:
+      return ev.tipo || '—';
+  }
+}
+ 
+// ── Formatar data ─────────────────────────────────────────
+function formatarDataHistorico(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString('pt-BR', {
+    day:    '2-digit',
+    month:  '2-digit',
+    year:   'numeric',
+    hour:   '2-digit',
+    minute: '2-digit',
+  });
+}
+ 
+// ── Criar card de evento ──────────────────────────────────
+function criarCardHistorico(ev, idx) {
+  const card = document.createElement('div');
+  card.className = `hpneu-card tipo-${ev.tipo || 'desconhecido'}`;
+  card.style.animationDelay = `${idx * 30}ms`;
+ 
+  const label   = HIST_LABELS[ev.tipo] || ev.tipo || '—';
+  const detalhe = gerarDetalheHistorico(ev);
+  const data    = formatarDataHistorico(ev.data);
+  const operador = ev.usuario_nome ? `Por ${ev.usuario_nome}` : '';
+ 
+  card.innerHTML = `
+    <div class="hpneu-stripe"></div>
+    <div class="hpneu-body">
+      <div class="hpneu-top">
+        <span class="hpneu-badge">${label}</span>
+        <span class="hpneu-data">${data}</span>
+      </div>
+      <div class="hpneu-detalhe">${detalhe}</div>
+      ${operador ? `<div class="hpneu-operador">${operador}</div>` : ''}
+    </div>
+  `;
+ 
+  return card;
+}
+ 
+// ── Abrir modal e carregar histórico ─────────────────────
+const HIST_POR_PAGINA = 10;
+
+async function abrirModalHistoricoPneu(p) {
+  document.getElementById('histPneuNumero').textContent = p.numero_identificacao;
+
+  const loading = document.getElementById('histPneuLoading');
+  const vazio   = document.getElementById('histPneuVazio');
+  const lista   = document.getElementById('histPneuLista');
+
+  // Reset
+  loading.style.display = 'flex';
+  vazio.style.display   = 'none';
+  lista.style.display   = 'none';
+  lista.innerHTML       = '';
+
+  abrirModal('modalHistoricoPneu');
+
+  try {
+    const eventos = await listarHistoricoPneu(p.id);
+
+    loading.style.display = 'none';
+
+    if (eventos.length === 0) {
+      vazio.style.display = 'flex';
+      return;
+    }
+
+    lista.style.display = 'flex';
+
+    let exibidos = 0;
+
+    function renderProximos() {
+      const proximo = eventos.slice(exibidos, exibidos + HIST_POR_PAGINA);
+      proximo.forEach((ev, idx) => {
+        lista.appendChild(criarCardHistorico(ev, exibidos + idx));
+      });
+      exibidos += proximo.length;
+
+      // Remove botão anterior se existir
+      const btnAnterior = lista.querySelector('.hpneu-ver-mais');
+      if (btnAnterior) btnAnterior.remove();
+
+      // Adiciona botão "Ver mais" se ainda tiver eventos
+      if (exibidos < eventos.length) {
+        const restantes = eventos.length - exibidos;
+        const btn = document.createElement('button');
+        btn.className = 'hpneu-ver-mais';
+        btn.textContent = `Ver mais ${restantes} registro${restantes !== 1 ? 's' : ''}`;
+        btn.addEventListener('click', renderProximos);
+        lista.appendChild(btn);
+      }
+    }
+
+    renderProximos();
+
+  } catch (err) {
+    console.error('Erro ao carregar histórico do pneu:', err);
+    loading.style.display = 'none';
+    vazio.style.display   = 'flex';
+    mostrarToast('Erro ao carregar histórico.', 'error');
+  }
 }

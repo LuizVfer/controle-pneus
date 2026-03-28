@@ -9,6 +9,7 @@ import {
   adicionarPneuAoCaminhao, removerPneuDoCaminhao, trocarPneuNoCaminhao,
   listarTrocas, sincronizarCaminhaoComFrota, listarVeiculosFrota, logout, db,
   listarEstoques, listarEstoque,
+  listarHistoricoPneu,
 } from './firebase.js';
 
 import { TIPOS_VEICULO, getTipoVeiculo } from './veiculos-tipos.js';
@@ -950,6 +951,16 @@ document.getElementById('btnRemoverPneuPos').addEventListener('click', async () 
   }
 });
 
+document.getElementById('btnHistoricoPneuObra').addEventListener('click', () => {
+  if (!posicaoAlvo?.posicao?.pneu_id) return;
+  const pneu = {
+    id:                   posicaoAlvo.posicao.pneu_id,
+    numero_identificacao: posicaoAlvo.posicao.pneu_numero || '—',
+  };
+  fecharModal('modalOpcoesPosicao');
+  abrirModalHistoricoPneu(pneu, 'obra');
+});
+
 // ─── Helpers de posição ───────────────────────
 
 async function removerPneuDaCaminhao_posicao(caminhao, posicao) {
@@ -1331,4 +1342,143 @@ function mostrarToast(msg, tipo = 'success') {
   toast.style.display  = 'flex';
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 4000);
+}
+
+const HIST_LABELS_OBRA = {
+  criado:              'Criado',
+  atribuido_obra:      'Atribuído à Obra',
+  removido_obra:       'Removido da Obra',
+  trocado_obra:        'Troca em Obra',
+  atribuido_frota:     'Atribuído à Frota',
+  removido_frota:      'Removido da Frota',
+  transferido:         'Transferido',
+  enviado_recapagem:   'Enviado p/ Recapagem',
+  retornou_recapagem:  'Retornou da Recapagem',
+  inutilizado:         'Inutilizado',
+  reativado:           'Reativado',
+  condicao_alterada:   'Condição Alterada',
+  marca_alterada:      'Marca Alterada',
+};
+ 
+function gerarDetalheHistoricoObra(ev) {
+  switch (ev.tipo) {
+    case 'criado':
+      return `Adicionado ao estoque <span>${ev.estoque_nome || 'Campo Grande'}</span>${ev.marca_nova ? ` · <span>${ev.marca_nova}</span>` : ''}`;
+    case 'atribuido_obra':
+      return `Atribuído ao veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.obra_nome ? ` · Obra: <span>${ev.obra_nome}</span>` : ''}`;
+    case 'removido_obra':
+      return `Removido do veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.obra_nome ? ` · Obra: <span>${ev.obra_nome}</span>` : ''}`;
+    case 'trocado_obra':
+      return `${ev.foi_pneu_saiu ? 'Saiu do' : 'Entrou no'} veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.obra_nome ? ` · Obra: <span>${ev.obra_nome}</span>` : ''}`;
+    case 'atribuido_frota':
+      return `Atribuído ao veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.caminhao_placa ? ` · Placa: <span>${ev.caminhao_placa}</span>` : ''}`;
+    case 'removido_frota':
+      return `Removido do veículo <span>${ev.caminhao_nome || '—'}</span>${ev.caminhao_tipo ? ` <span>[${ev.caminhao_tipo}]</span>` : ''}${ev.caminhao_placa ? ` · Placa: <span>${ev.caminhao_placa}</span>` : ''}`;
+    case 'transferido':
+      return `De <span>${ev.estoque_origem || 'Campo Grande'}</span> → <span>${ev.estoque_destino || 'Campo Grande'}</span>`;
+    case 'enviado_recapagem':
+      return `Enviado para recapagem`;
+    case 'retornou_recapagem':
+      return `Retornou da recapagem${ev.qtd_recapagens ? ` · <span>${ev.qtd_recapagens}ª recapagem</span>` : ''}`;
+    case 'inutilizado':
+      return `Motivo: <span>${ev.motivo || '—'}</span>${ev.caminhao_nome ? ` · Veículo: <span>${ev.caminhao_nome}</span>` : ''}`;
+    case 'reativado':
+      return `Reativado — voltou ao estoque como disponível`;
+    case 'condicao_alterada':
+      return `<span>${ev.condicao_anterior || '—'}</span> → <span>${ev.condicao_nova || '—'}</span>`;
+    case 'marca_alterada':
+      return `<span>${ev.marca_anterior || 'sem marca'}</span> → <span>${ev.marca_nova || '—'}</span>`;
+    default:
+      return ev.tipo || '—';
+  }
+}
+ 
+function criarCardHistoricoObra(ev, idx) {
+  const card = document.createElement('div');
+  card.className = `hpneu-card tipo-${ev.tipo || 'desconhecido'}`;
+  card.style.animationDelay = `${idx * 30}ms`;
+ 
+  const label    = HIST_LABELS_OBRA[ev.tipo] || ev.tipo || '—';
+  const detalhe  = gerarDetalheHistoricoObra(ev);
+  const dataObj  = ev.data?.toDate ? ev.data.toDate() : null;
+  const dataFmt  = dataObj
+    ? dataObj.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : '—';
+ 
+  card.innerHTML = `
+    <div class="hpneu-stripe"></div>
+    <div class="hpneu-body">
+      <div class="hpneu-top">
+        <span class="hpneu-badge">${label}</span>
+        <span class="hpneu-data">${dataFmt}</span>
+      </div>
+      <div class="hpneu-detalhe">${detalhe}</div>
+      ${ev.usuario_nome ? `<div class="hpneu-operador">Por ${ev.usuario_nome}</div>` : ''}
+    </div>`;
+ 
+  return card;
+}
+ 
+const HIST_PNEU_POR_PAG_OBRA = 10;
+ 
+async function abrirModalHistoricoPneu(pneu, origem = 'obra') {
+  const sufixo   = origem === 'obra' ? 'Obra' : 'Frota';
+  const idModal  = `modalHistoricoPneu${sufixo}`;
+  const idNum    = `histPneuNumero${sufixo}`;
+  const idLoad   = `histPneuLoading${sufixo}`;
+  const idVazio  = `histPneuVazio${sufixo}`;
+  const idLista  = `histPneuLista${sufixo}`;
+ 
+  document.getElementById(idNum).textContent = pneu.numero_identificacao;
+ 
+  const loading = document.getElementById(idLoad);
+  const vazio   = document.getElementById(idVazio);
+  const lista   = document.getElementById(idLista);
+ 
+  loading.style.display = 'flex';
+  vazio.style.display   = 'none';
+  lista.style.display   = 'none';
+  lista.innerHTML       = '';
+ 
+  abrirModal(idModal);
+ 
+  try {
+    const eventos = await listarHistoricoPneu(pneu.id);
+ 
+    loading.style.display = 'none';
+ 
+    if (eventos.length === 0) {
+      vazio.style.display = 'flex';
+      return;
+    }
+ 
+    lista.style.display = 'flex';
+    let exibidos = 0;
+ 
+    function renderProximos() {
+      const proximo = eventos.slice(exibidos, exibidos + HIST_PNEU_POR_PAG_OBRA);
+      proximo.forEach((ev, idx) => lista.appendChild(criarCardHistoricoObra(ev, exibidos + idx)));
+      exibidos += proximo.length;
+ 
+      const btnAnt = lista.querySelector('.hpneu-ver-mais');
+      if (btnAnt) btnAnt.remove();
+ 
+      if (exibidos < eventos.length) {
+        const restantes = eventos.length - exibidos;
+        const btn = document.createElement('button');
+        btn.className   = 'hpneu-ver-mais';
+        btn.textContent = `Ver mais ${restantes} registro${restantes !== 1 ? 's' : ''}`;
+        btn.addEventListener('click', renderProximos);
+        lista.appendChild(btn);
+      }
+    }
+ 
+    renderProximos();
+ 
+  } catch (err) {
+    console.error('Erro ao carregar histórico do pneu:', err);
+    loading.style.display = 'none';
+    vazio.style.display   = 'flex';
+    mostrarToast('Erro ao carregar histórico.', 'error');
+  }
 }

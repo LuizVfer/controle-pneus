@@ -411,6 +411,18 @@ export async function adicionarPneuAoCaminhao(obraId, caminhaoId, pneuId, pneuNu
       });
     }
   }
+  await gravarHistoricoPneu(pneuId, {
+    tipo:          "atribuido_obra",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    obra_id:       obraId,
+    obra_nome:     obraNome,
+    caminhao_id:   caminhaoId,
+    caminhao_nome: caminhao.nome,
+    caminhao_tipo: caminhao.tipo_veiculo_tag || null,
+    caminhao_placa:caminhao.placa            || null,
+    foi_pneu_saiu: false,
+  });
 }
 
 /**
@@ -469,6 +481,18 @@ export async function removerPneuDoCaminhao(obraId, caminhaoId, pneuId, pneuNume
       });
     }
   }
+  await gravarHistoricoPneu(pneuId, {
+    tipo:          "removido_obra",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    obra_id:       obraId,
+    obra_nome:     obraNome,
+    caminhao_id:   caminhaoId,
+    caminhao_nome: caminhao.nome,
+    caminhao_tipo: caminhao.tipo_veiculo_tag || null,
+    caminhao_placa:caminhao.placa            || null,
+    foi_pneu_saiu: true,
+  });
 }
 
 /**
@@ -542,6 +566,31 @@ export async function trocarPneuNoCaminhao(
       });
     }
   }
+  await gravarHistoricoPneu(pneuSaiuId, {
+    tipo:          "trocado_obra",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    obra_id:       obraId,
+    obra_nome:     obraNome,
+    caminhao_id:   caminhaoId,
+    caminhao_nome: caminhao.nome,
+    caminhao_tipo: caminhao.tipo_veiculo_tag || null,
+    caminhao_placa:caminhao.placa            || null,
+    foi_pneu_saiu: true,
+  });
+
+  await gravarHistoricoPneu(pneuEntrouId, {
+    tipo:          "trocado_obra",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    obra_id:       obraId,
+    obra_nome:     obraNome,
+    caminhao_id:   caminhaoId,
+    caminhao_nome: caminhao.nome,
+    caminhao_tipo: caminhao.tipo_veiculo_tag || null,
+    caminhao_placa:caminhao.placa            || null,
+    foi_pneu_saiu: false,
+  });
 }
 
 /** Mantido para compatibilidade com código legado (redireciona para adicionarPneuAoCaminhao) */
@@ -568,7 +617,7 @@ async function _proximoNumeroPneu() {
   return `ALS ${ano}-${String(novoNum).padStart(4, "0")}`;
 }
 
-export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null, marcaId = null, marcaNome = null) {
+export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null, marcaId = null, marcaNome = null, usuarioId = null, usuarioNome = null) {
   const numero = await _proximoNumeroPneu();
   const ref = await addDoc(collection(db, "pneus"), {
     numero_identificacao:  numero,
@@ -584,23 +633,45 @@ export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null,
     estoque_nome:          estoqueNome,
     criado_em:             serverTimestamp(),
   });
+  await gravarHistoricoPneu(ref.id, {
+    tipo:         "criado",
+    usuario_id:   usuarioId   ?? null,
+    usuario_nome: usuarioNome ?? null,
+    estoque_id:   estoqueId,
+    estoque_nome: estoqueNome || "Campo Grande",
+    marca_nova:   marcaNome,
+  });
   return { id: ref.id, numero_identificacao: numero };
 }
 
-export async function adicionarPneusEmLote(quantidade, estoqueId = null, estoqueNome = null, marcaId = null, marcaNome = null) {
+export async function adicionarPneusEmLote(quantidade, estoqueId = null, estoqueNome = null, marcaId = null, marcaNome = null, usuarioId = null, usuarioNome = null) {
   const resultados = [];
   for (let i = 0; i < quantidade; i++) {
-    resultados.push(await adicionarPneuEstoque(estoqueId, estoqueNome, marcaId, marcaNome));
+    resultados.push(await adicionarPneuEstoque(estoqueId, estoqueNome, marcaId, marcaNome, usuarioId, usuarioNome));
   }
   return resultados;
 }
 
-export async function atualizarMarcaPneu(pneuId, marcaId, marcaNome) {
+export async function atualizarMarcaPneu(pneuId, marcaId, marcaNome, usuarioId = null, usuarioNome = null, marcaAnteriorNome = null) {
   await updateDoc(doc(db, "pneus", pneuId), { marca_id: marcaId, marca_nome: marcaNome });
 }
 
-export async function atualizarCondicaoPneu(pneuId, condicao) {
+export async function atualizarCondicaoPneu(pneuId, condicao, usuarioId = null, usuarioNome = null, condicaoAnterior = null) {
   await updateDoc(doc(db, "pneus", pneuId), { condicao });
+  await gravarHistoricoPneu(pneuId, {
+    tipo:              "condicao_alterada",
+    usuario_id:        usuarioId,
+    usuario_nome:      usuarioNome,
+    condicao_anterior: condicaoAnterior,
+    condicao_nova:     condicao,
+  });
+  await gravarHistoricoPneu(pneuId, {
+    tipo:           "marca_alterada",
+    usuario_id:     usuarioId,
+    usuario_nome:   usuarioNome,
+    marca_anterior: marcaAnteriorNome,
+    marca_nova:     marcaNome,
+  });
 }
 
 
@@ -637,10 +708,19 @@ export async function deletarEstoque(estoqueId) {
 }
 
 /** Transfere um pneu de um estoque para outro */
-export async function transferirPneuEstoque(pneuId, novoEstoqueId, novoEstoqueNome) {
+export async function transferirPneuEstoque(pneuId, novoEstoqueId, novoEstoqueNome, usuarioId = null, usuarioNome = null, estoqueOrigemId = null, estoqueOrigemNome = null) {
   await updateDoc(doc(db, "pneus", pneuId), {
     estoque_id:   novoEstoqueId,
     estoque_nome: novoEstoqueNome,
+  });
+  await gravarHistoricoPneu(pneuId, {
+    tipo:            "transferido",
+    usuario_id:      usuarioId,
+    usuario_nome:    usuarioNome,
+    estoque_origem:  estoqueOrigemNome || "Campo Grande",
+    estoque_destino: novoEstoqueNome   || "Campo Grande",
+    estoque_id:      novoEstoqueId,
+    estoque_nome:    novoEstoqueNome,
   });
 }
 
@@ -792,18 +872,36 @@ export async function inutilizarPneu(pneuId, motivo, usuarioId, usuarioNome) {
     caminhao_id:         null,
     caminhao_nome:       null,
   });
+
+  await gravarHistoricoPneu(pneuId, {
+    tipo:          "inutilizado",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    motivo:        motivo,
+    obra_id:       pneu.obra_id_atual || null,
+    obra_nome:     pneu.obra_nome     || null,
+    caminhao_id:   pneu.caminhao_id   || null,
+    caminhao_nome: pneu.caminhao_nome || null,
+    estoque_id:    pneu.estoque_id    || null,
+    estoque_nome:  pneu.estoque_nome  || null,
+  });
 }
 
-export async function reativarPneu(pneuId) {
+export async function reativarPneu(pneuId, usuarioId = null, usuarioNome = null) {
   await updateDoc(doc(db, "pneus", pneuId), {
     status:              "disponivel",
     motivo_inutilizacao: null,
     data_inutilizacao:   null,
   });
+  await gravarHistoricoPneu(pneuId, {
+    tipo:         "reativado",
+    usuario_id:   usuarioId,
+    usuario_nome: usuarioNome,
+  });
 }
 
 /** Envia um pneu para recapagem (disponivel ou inutilizavel → em_recapagem) */
-export async function enviarParaRecapagem(pneuId) {
+export async function enviarParaRecapagem(pneuId, usuarioId = null, usuarioNome = null) {
   await updateDoc(doc(db, "pneus", pneuId), {
     status:               "em_recapagem",
     data_envio_recapagem: serverTimestamp(),
@@ -811,10 +909,15 @@ export async function enviarParaRecapagem(pneuId) {
     motivo_inutilizacao:  null,
     data_inutilizacao:    null,
   });
+  await gravarHistoricoPneu(pneuId, {
+    tipo:         "enviado_recapagem",
+    usuario_id:   usuarioId,
+    usuario_nome: usuarioNome,
+  });
 }
 
 /** Marca que o pneu voltou da recapagem (em_recapagem → disponivel) */
-export async function receberDeRecapagem(pneuId) {
+export async function receberDeRecapagem(pneuId, usuarioId = null, usuarioNome = null) {
   const pneuRef  = doc(db, "pneus", pneuId);
   const pneuSnap = await getDoc(pneuRef);
   const pneu     = pneuSnap.data();
@@ -824,6 +927,12 @@ export async function receberDeRecapagem(pneuId) {
     qtd_recapagens:        (pneu.qtd_recapagens || 0) + 1,
     data_ultima_recapagem: serverTimestamp(),
     data_envio_recapagem:  null,
+  });
+  await gravarHistoricoPneu(pneuId, {
+    tipo:           "retornou_recapagem",
+    usuario_id:     usuarioId,
+    usuario_nome:   usuarioNome,
+    qtd_recapagens: (pneu.qtd_recapagens || 0) + 1,
   });
 }
 
@@ -1047,6 +1156,16 @@ export async function adicionarPneuAoVeiculoFrota(veiculoId, pneuId, pneuNumero,
     status: "em_uso", caminhao_id: veiculoId, caminhao_nome: v.nome,
     obra_id_atual: null, obra_nome: "Frota",
   });
+  await gravarHistoricoPneu(pneuId, {
+    tipo:          "atribuido_frota",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    caminhao_id:   veiculoId,
+    caminhao_nome: v.nome,
+    caminhao_tipo: v.tipo_veiculo_tag || null,
+    caminhao_placa:v.placa            || null,
+    foi_pneu_saiu: false,
+  });
 }
 
 export async function removerPneuDoVeiculoFrota(veiculoId, pneuId, pneuNumero, usuarioId, usuarioNome) {
@@ -1091,6 +1210,16 @@ export async function removerPneuDoVeiculoFrota(veiculoId, pneuId, pneuNumero, u
       });
     }
   }
+  await gravarHistoricoPneu(pneuId, {
+    tipo:          "removido_frota",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    caminhao_id:   veiculoId,
+    caminhao_nome: v.nome,
+    caminhao_tipo: v.tipo_veiculo_tag || null,
+    caminhao_placa:v.placa            || null,
+    foi_pneu_saiu: true,
+  });
 }
 
 export async function trocarPneuNoVeiculoFrota(
@@ -1133,6 +1262,26 @@ export async function trocarPneuNoVeiculoFrota(
       await updateDoc(camDoc.ref, { pneus_ids: arrayUnion(pneuEntrouId) });
     }
   }
+  await gravarHistoricoPneu(pneuSaiuId, {
+    tipo:          "removido_frota",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    caminhao_id:   veiculoId,
+    caminhao_nome: v.nome,
+    caminhao_tipo: v.tipo_veiculo_tag || null,
+    caminhao_placa:v.placa            || null,
+    foi_pneu_saiu: true,
+  });
+  await gravarHistoricoPneu(pneuEntrouId, {
+    tipo:          "atribuido_frota",
+    usuario_id:    usuarioId,
+    usuario_nome:  usuarioNome,
+    caminhao_id:   veiculoId,
+    caminhao_nome: v.nome,
+    caminhao_tipo: v.tipo_veiculo_tag || null,
+    caminhao_placa:v.placa            || null,
+    foi_pneu_saiu: false,
+  });
 }
 
 export async function atualizarPosicaoVeiculoFrota(veiculoId, posicaoId, dados) {
@@ -1185,5 +1334,41 @@ export async function deletarMarca(marcaId) {
 // ─────────────────────────────────────────────
 //  Exports de instâncias (caso precise direto)
 // ─────────────────────────────────────────────
+export async function gravarHistoricoPneu(pneuId, evento) {
+  await addDoc(collection(db, "pneus", pneuId, "historico"), {
+    tipo:              evento.tipo              ?? null,
+    usuario_id:        evento.usuario_id        ?? null,
+    usuario_nome:      evento.usuario_nome      ?? null,
+    obra_id:           evento.obra_id           ?? null,
+    obra_nome:         evento.obra_nome         ?? null,
+    caminhao_id:       evento.caminhao_id       ?? null,
+    caminhao_nome:     evento.caminhao_nome     ?? null,
+    caminhao_tipo:     evento.caminhao_tipo     ?? null,
+    caminhao_placa:    evento.caminhao_placa    ?? null,
+    posicao_label:     evento.posicao_label     ?? null,
+    posicao_id:        evento.posicao_id        ?? null,
+    foi_pneu_saiu:     evento.foi_pneu_saiu     ?? null,
+    estoque_id:        evento.estoque_id        ?? null,
+    estoque_nome:      evento.estoque_nome      ?? null,
+    estoque_origem:    evento.estoque_origem    ?? null,
+    estoque_destino:   evento.estoque_destino   ?? null,
+    condicao_anterior: evento.condicao_anterior ?? null,
+    condicao_nova:     evento.condicao_nova     ?? null,
+    marca_anterior:    evento.marca_anterior    ?? null,
+    marca_nova:        evento.marca_nova        ?? null,
+    qtd_recapagens:    evento.qtd_recapagens    ?? null,
+    motivo:            evento.motivo            ?? null,
+    data:              serverTimestamp(),
+  });
+}
+
+export async function listarHistoricoPneu(pneuId) {
+  const q = query(
+    collection(db, "pneus", pneuId, "historico"),
+    orderBy("data", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
 
 export { auth, db };

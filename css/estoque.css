@@ -916,3 +916,177 @@
 }
 .pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .pag-sep { font-size: 14px; color: var(--texto-muted); padding: 0 4px; line-height: 36px; }
+
+/* ── Modal histórico — tamanho ──────────────────────────── */
+.modal-historico-pneu {
+  max-width: 560px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+}
+ 
+.modal-historico-pneu .modal-body {
+  overflow-y: auto;
+  flex: 1;
+}
+ 
+/* ── Loading / vazio ────────────────────────────────────── */
+.hist-pneu-loading,
+.hist-pneu-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 56px 24px;
+  color: var(--texto-muted);
+  font-size: 13px;
+}
+ 
+.hist-pneu-vazio svg {
+  width: 44px;
+  height: 44px;
+  color: var(--borda-light);
+}
+ 
+/* ── Lista de eventos ───────────────────────────────────── */
+.hist-pneu-lista {
+  display: flex;
+  flex-direction: column;
+}
+ 
+/* ── Card de evento ─────────────────────────────────────── */
+.hpneu-card {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-bottom: 1px solid var(--borda);
+  animation: fadeUp 0.25s ease both;
+}
+ 
+.hpneu-card:last-child {
+  border-bottom: none;
+}
+ 
+/* Stripe lateral colorida */
+.hpneu-stripe {
+  width: 4px;
+  flex-shrink: 0;
+  border-radius: 0;
+  background: var(--borda-light);
+}
+ 
+/* Cores por tipo */
+.hpneu-card.tipo-criado            .hpneu-stripe { background: var(--verde); }
+.hpneu-card.tipo-atribuido_obra    .hpneu-stripe { background: var(--accent); }
+.hpneu-card.tipo-removido_obra     .hpneu-stripe { background: var(--erro); }
+.hpneu-card.tipo-trocado_obra      .hpneu-stripe { background: var(--azul); }
+.hpneu-card.tipo-atribuido_frota   .hpneu-stripe { background: var(--accent); }
+.hpneu-card.tipo-removido_frota    .hpneu-stripe { background: var(--erro); }
+.hpneu-card.tipo-transferido       .hpneu-stripe { background: var(--azul); }
+.hpneu-card.tipo-enviado_recapagem .hpneu-stripe { background: var(--azul); }
+.hpneu-card.tipo-retornou_recapagem .hpneu-stripe { background: var(--verde); }
+.hpneu-card.tipo-inutilizado       .hpneu-stripe { background: var(--erro); }
+.hpneu-card.tipo-reativado         .hpneu-stripe { background: var(--verde); }
+.hpneu-card.tipo-condicao_alterada .hpneu-stripe { background: var(--accent); }
+.hpneu-card.tipo-marca_alterada    .hpneu-stripe { background: var(--texto-muted); }
+ 
+/* Corpo do card */
+.hpneu-body {
+  flex: 1;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+ 
+/* Linha superior: badge + data */
+.hpneu-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+ 
+.hpneu-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  background: var(--cinza-soft);
+  color: var(--texto-sub);
+  border: 1px solid var(--borda);
+  white-space: nowrap;
+}
+ 
+/* Cor do badge por tipo */
+.hpneu-card.tipo-criado            .hpneu-badge { background: var(--verde-soft);  color: var(--verde);  border-color: rgba(39,174,96,0.2); }
+.hpneu-card.tipo-atribuido_obra    .hpneu-badge { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-glow); }
+.hpneu-card.tipo-removido_obra     .hpneu-badge { background: var(--erro-soft);   color: var(--erro);   border-color: rgba(224,85,85,0.2); }
+.hpneu-card.tipo-trocado_obra      .hpneu-badge { background: var(--azul-soft);   color: var(--azul);   border-color: rgba(59,158,255,0.2); }
+.hpneu-card.tipo-atribuido_frota   .hpneu-badge { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-glow); }
+.hpneu-card.tipo-removido_frota    .hpneu-badge { background: var(--erro-soft);   color: var(--erro);   border-color: rgba(224,85,85,0.2); }
+.hpneu-card.tipo-transferido       .hpneu-badge { background: var(--azul-soft);   color: var(--azul);   border-color: rgba(59,158,255,0.2); }
+.hpneu-card.tipo-enviado_recapagem .hpneu-badge { background: var(--azul-soft);   color: var(--azul);   border-color: rgba(59,158,255,0.2); }
+.hpneu-card.tipo-retornou_recapagem .hpneu-badge{ background: var(--verde-soft);  color: var(--verde);  border-color: rgba(39,174,96,0.2); }
+.hpneu-card.tipo-inutilizado       .hpneu-badge { background: var(--erro-soft);   color: var(--erro);   border-color: rgba(224,85,85,0.2); }
+.hpneu-card.tipo-reativado         .hpneu-badge { background: var(--verde-soft);  color: var(--verde);  border-color: rgba(39,174,96,0.2); }
+.hpneu-card.tipo-condicao_alterada .hpneu-badge { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-glow); }
+.hpneu-card.tipo-marca_alterada    .hpneu-badge { background: var(--cinza-soft);  color: var(--texto-sub); }
+ 
+.hpneu-data {
+  font-size: 11px;
+  color: var(--texto-muted);
+  white-space: nowrap;
+}
+ 
+/* Linha de detalhe */
+.hpneu-detalhe {
+  font-size: 13px;
+  color: var(--texto);
+  font-weight: 500;
+  line-height: 1.5;
+}
+ 
+.hpneu-detalhe span {
+  color: var(--texto-sub);
+  font-weight: 400;
+}
+ 
+/* Linha do operador */
+.hpneu-operador {
+  font-size: 11px;
+  color: var(--texto-muted);
+  margin-top: 2px;
+}
+ 
+/* Número do pneu clicável no card */
+.pneu-numero {
+  cursor: pointer;
+  transition: color var(--transition);
+}
+.pneu-numero:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.hpneu-ver-mais {
+  margin: 4px 16px 12px;
+  padding: 10px;
+  background: var(--cinza-soft);
+  border: 1px dashed var(--borda);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  align-self: stretch;
+}
+.hpneu-ver-mais:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}

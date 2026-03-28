@@ -298,6 +298,13 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
             Remover pneu
           </button>
+          <button class="btn-opcao historico" id="btnHistoricoPneuFrota">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Histórico do pneu
+          </button>
         </div>
       </div>
     </div>
@@ -367,6 +374,43 @@
   <div class="toast" id="toast" style="display:none">
     <span class="toast-icon"></span>
     <span id="toastMsg"></span>
+  </div>
+
+  <div class="modal-overlay" id="modalHistoricoPneuFrota" style="display:none">
+    <div class="modal modal-historico-pneu">
+      <div class="modal-header">
+        <div class="modal-header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="modal-title">Histórico do Pneu</h3>
+          <p class="modal-subtitle">Nº <strong id="histPneuNumeroFrota">—</strong></p>
+        </div>
+        <button class="modal-close" data-modal="modalHistoricoPneuFrota">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding:0">
+        <div class="hist-pneu-loading" id="histPneuLoadingFrota">
+          <div class="spinner"></div>
+          <span>Carregando histórico...</span>
+        </div>
+        <div class="hist-pneu-vazio" id="histPneuVazioFrota" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <p>Nenhum registro encontrado.</p>
+        </div>
+        <div class="hist-pneu-lista" id="histPneuListaFrota" style="display:none"></div>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="../js/theme.js"></script>
