@@ -1,11 +1,12 @@
 # 🔧 Controle de Pneus
-**Sistema de Gestão de Frota e Estoque de Pneus**  
+**Sistema de Gestão e Rastreamento de Pneus**  
+Sistema de Gestão de Frota e Estoque de Pneus
 
 ---
 
 ## 📋 Visão Geral
 
-O **Controle de Pneus ALS** é um sistema web desenvolvido para gerenciar o ciclo de vida completo dos pneus utilizados nas obras da empresa. O sistema permite rastrear cada pneu individualmente, desde sua entrada no estoque até sua inutilização, passando por todas as obras e veículos em que foi utilizado.
+O **Controle de Pneus** é um sistema web desenvolvido para gerenciar o ciclo de vida completo dos pneus utilizados nas obras da empresa. O sistema permite rastrear cada pneu individualmente, desde sua entrada no estoque até sua inutilização, passando por todas as obras e veículos em que foi utilizado.
 
 ---
 
@@ -72,7 +73,7 @@ controle-pneus/
 │   └── usuarios.js
 │
 ├── assets/
-│   └── logo-als.png
+│   └── logo-controle-pneus.png
 │
 ├── firebase.json           ← Configuração do Firebase Hosting
 ├── firestore.rules         ← Regras de segurança do Firestore
@@ -105,7 +106,7 @@ controle-pneus/
 ### `/pneus/{pneuId}`
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `numero_identificacao` | string | Ex: `ALS 26-0001` |
+| `numero_identificacao` | string | Ex: `PNEU-26-0001` |
 | `status` | string | `disponivel`, `em_uso`, `inutilizavel`, `em_recapagem` |
 | `condicao` | string | `novo`, `medio`, `ruim` |
 | `marca_id` | string | ID da marca do pneu |
@@ -196,12 +197,12 @@ Histórico de movimentações de pneus no veículo da frota.
 ## 🔢 Numeração de Pneus
 
 ```
-ALS {ano2digitos}-{sequencial4digitos}
+PNEU-{ano2digitos}-{sequencial4digitos}
 ```
 
 **Exemplos:**
-- `ALS 26-0001` — primeiro pneu de 2026
-- `ALS 26-0150` — centésimo quinquagésimo pneu
+- `PNEU-26-0001` — primeiro pneu de 2026
+- `PNEU-26-0150` — centésimo quinquagésimo pneu
 
 O contador é global, não reinicia por ano, e suporta além de 9999.
 
@@ -393,5 +394,5 @@ firebase deploy
 
 ## 📄 Licença
 
-Sistema de uso interno exclusivo — **Andre L dos Santos Ltda**.  
+Projeto desenvolvido para gerenciamento de pneus, veículos, estoque e movimentações de frota.
 Todos os direitos reservados © 2026.

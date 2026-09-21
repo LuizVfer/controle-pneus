@@ -614,7 +614,7 @@ async function _proximoNumeroPneu() {
     return novo;
   });
   const ano = String(new Date().getFullYear()).slice(-2);
-  return `ALS ${ano}-${String(novoNum).padStart(4, "0")}`;
+  return `PNEU-${ano}-${String(novoNum).padStart(4, '0')}`;
 }
 
 export async function adicionarPneuEstoque(estoqueId = null, estoqueNome = null, marcaId = null, marcaNome = null, usuarioId = null, usuarioNome = null) {
