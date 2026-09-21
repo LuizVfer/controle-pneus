@@ -1,6 +1,5 @@
-# 🔧 Controle de Pneus — ALS
-**Sistema de Gestão e Rastreamento de Pneus**  
-Andre L dos Santos Ltda — Uso Interno
+# 🔧 Controle de Pneus
+**Sistema de Gestão de Frota e Estoque de Pneus**  
 
 ---
 
