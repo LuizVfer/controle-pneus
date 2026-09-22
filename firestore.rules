@@ -1,0 +1,117 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function dadosUsuario() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function usuarioAtivo() {
+      return autenticado() && dadosUsuario().ativo == true;
+    }
+
+    function isAdmin() {
+      return usuarioAtivo() && dadosUsuario().perfil == 'admin';
+    }
+
+    match /usuarios/{uid} {
+      allow read: if autenticado() && (request.auth.uid == uid || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false;
+
+      match /historico/{eventoId} {
+        allow read: if usuarioAtivo();
+        allow create: if usuarioAtivo();
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    match /config/pneus_contador {
+      allow read: if usuarioAtivo();
+      allow create: if usuarioAtivo();
+      allow update: if usuarioAtivo();
+      allow delete: if false;
+    }
+
+    match /pneus/{pneuId} {
+      allow read: if usuarioAtivo();
+      allow create: if usuarioAtivo();
+      allow update: if usuarioAtivo();
+      allow delete: if false;
+
+      match /historico/{eventoId} {
+        allow read: if usuarioAtivo();
+        allow create: if usuarioAtivo();
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    match /estoques/{estoqueId} {
+      allow read: if usuarioAtivo();
+      allow create: if isAdmin();
+      allow update: if usuarioAtivo();
+      allow delete: if isAdmin();
+    }
+
+    match /marcas/{marcaId} {
+      allow read: if usuarioAtivo();
+      allow create: if usuarioAtivo();
+      allow update: if usuarioAtivo();
+      allow delete: if usuarioAtivo();
+    }
+
+    match /obras/{obraId} {
+      allow read: if usuarioAtivo();
+      allow create: if usuarioAtivo();
+      allow update: if usuarioAtivo();
+      allow delete: if isAdmin();
+
+      match /caminhoes/{caminhaoId} {
+        allow read: if usuarioAtivo();
+        allow create: if usuarioAtivo();
+        allow update: if usuarioAtivo();
+        allow delete: if usuarioAtivo();
+      }
+
+      match /trocas/{trocaId} {
+        allow read: if usuarioAtivo();
+        allow create: if usuarioAtivo();
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      match /logs/{logId} {
+        allow read: if usuarioAtivo();
+        allow create: if usuarioAtivo();
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    match /veiculos/{veiculoId} {
+      allow read: if usuarioAtivo();
+      allow create: if usuarioAtivo();
+      allow update: if usuarioAtivo();
+      allow delete: if isAdmin();
+
+      match /movimentacoes/{movId} {
+        allow read: if usuarioAtivo();
+        allow create: if usuarioAtivo();
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

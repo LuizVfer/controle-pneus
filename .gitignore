@@ -2,7 +2,6 @@
 js/config.js
 .firebase
 .firebaserc
-firebase.json
 vercel.json
 
 # ─── Sistema operacional ──────────────────────
