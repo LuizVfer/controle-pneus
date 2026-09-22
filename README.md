@@ -43,22 +43,25 @@ O sistema também mantém históricos de movimentações, permite o gerenciament
 
 ## 🖼️ Screenshots
 
-> Screenshots da aplicação serão adicionadas em breve.
-
-<!--
-Exemplo futuro:
-
 ### Dashboard
+
 ![Dashboard](docs/images/dashboard.png)
 
 ### Estoque
+
 ![Estoque](docs/images/estoque.png)
 
-### Controle de Veículos
-![Veículos](docs/images/veiculos.png)
--->
+### Veículos
 
----
+![Veículos](docs/images/veiculos.png)
+
+### Obra / Local de Operação
+
+![Obra](docs/images/obra.png)
+
+### Relatórios
+
+![Relatórios](docs/images/relatorios.png)
 
 ## 🚀 Tecnologias
 
@@ -365,7 +368,9 @@ http://127.0.0.1:5500/html/login.html
 
 ## 🌐 Demonstração
 
-Uma versão demonstrativa com dados fictícios será disponibilizada para permitir a navegação pelo sistema sem expor informações utilizadas durante o desenvolvimento original.
+A aplicação está disponível online através do Firebase Hosting:
+
+https://controle-de-pneus-79051.web.app
 
 ---
 
